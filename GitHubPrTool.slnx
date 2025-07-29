@@ -1,0 +1,12 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/GitHubPrTool.Core/GitHubPrTool.Core.csproj" />
+    <Project Path="src/GitHubPrTool.Desktop/GitHubPrTool.Desktop.csproj" />
+    <Project Path="src/GitHubPrTool.Infrastructure/GitHubPrTool.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/GitHubPrTool.Core.Tests/GitHubPrTool.Core.Tests.csproj" />
+    <Project Path="tests/GitHubPrTool.Desktop.Tests/GitHubPrTool.Desktop.Tests.csproj" />
+    <Project Path="tests/GitHubPrTool.Infrastructure.Tests/GitHubPrTool.Infrastructure.Tests.csproj" />
+  </Folder>
+</Solution>
