@@ -64,9 +64,9 @@ public class DataSyncService : IDataSyncService
             OnSyncProgressChanged("Repositories", 0, "Fetching repositories from GitHub...", 0, 0);
 
             // Get repositories from GitHub API
-            var githubRepos = new List<Repository>();
+            var githubRepos = new List<Octokit.Repository>();
             int currentPage = 1;
-            IReadOnlyList<Repository> pageResults;
+            IReadOnlyList<Octokit.Repository> pageResults;
 
             do
             {
@@ -157,7 +157,7 @@ public class DataSyncService : IDataSyncService
                 SortDirection = SortDirection.Descending
             };
 
-            var githubPrs = new List<PullRequest>();
+            var githubPrs = new List<Octokit.PullRequest>();
             var page = 1;
             const int pageSize = 100;
 
