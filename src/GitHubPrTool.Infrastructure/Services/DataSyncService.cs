@@ -64,11 +64,23 @@ public class DataSyncService : IDataSyncService
             OnSyncProgressChanged("Repositories", 0, "Fetching repositories from GitHub...", 0, 0);
 
             // Get repositories from GitHub API
-            var apiOptions = new ApiOptions { PageSize = 100, PageCount = 1 };
-            var githubRepos = await _gitHubClient.Repository.GetAllForCurrent(apiOptions);
+            var githubRepos = new List<Repository>();
+            int currentPage = 1;
+            IReadOnlyList<Repository> pageResults;
 
-            _logger.LogInformation("Retrieved {Count} repositories from GitHub API", githubRepos.Count);
+            do
+            {
+                var apiOptions = new ApiOptions { PageSize = 100, PageCount = 1, StartPage = currentPage };
+                pageResults = await _gitHubClient.Repository.GetAllForCurrent(apiOptions);
+                githubRepos.AddRange(pageResults);
 
+                _logger.LogInformation("Retrieved {Count} repositories from GitHub API (Page {Page})", pageResults.Count, currentPage);
+
+                currentPage++;
+                cancellationToken.ThrowIfCancellationRequested();
+            } while (pageResults.Count > 0);
+
+            _logger.LogInformation("Retrieved a total of {Count} repositories from GitHub API", githubRepos.Count);
             OnSyncProgressChanged("Repositories", 25, "Processing repositories...", 0, githubRepos.Count);
 
             var syncedCount = 0;
