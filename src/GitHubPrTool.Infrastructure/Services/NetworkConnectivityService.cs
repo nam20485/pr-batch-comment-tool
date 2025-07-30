@@ -95,9 +95,16 @@ public class NetworkConnectivityService : INetworkConnectivityService, IDisposab
             }
 
             // Try to ping a reliable external service
-            using var ping = new Ping();
-            var reply = await ping.SendPingAsync("8.8.8.8", 5000);
-            return reply.Status == IPStatus.Success;
+            await _pingSemaphore.WaitAsync(cancellationToken);
+            try
+            {
+                var reply = await _ping.SendPingAsync("8.8.8.8", 5000);
+                return reply.Status == IPStatus.Success;
+            }
+            finally
+            {
+                _pingSemaphore.Release();
+            }
         }
         catch (Exception ex)
         {
