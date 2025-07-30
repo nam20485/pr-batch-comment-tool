@@ -362,6 +362,8 @@ public class CommentExportImportService : ICommentExportImportService
 
     private static string EscapeCsvValue(string? value)
     {
+        if (value == null)
+            return "";
         if (string.IsNullOrEmpty(value))
             return "";
 
