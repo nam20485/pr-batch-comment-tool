@@ -26,7 +26,6 @@ public class MainWindowViewModelTests
         
         // Create mocks for the ViewModels
         var mockGitHubRepo = new Mock<IGitHubRepository>();
-        var mockDataSync = new Mock<IDataSyncService>();
         var mockSearchService = new Mock<ISearchService>();
         var mockAuth = new Mock<IAuthService>();
         var mockRepoLogger = new Mock<ILogger<RepositoryListViewModel>>();
