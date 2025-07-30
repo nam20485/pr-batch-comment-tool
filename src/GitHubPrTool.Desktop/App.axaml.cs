@@ -102,6 +102,7 @@ public static class UIServiceExtensions
         // Register ViewModels
         services.AddTransient<MainWindowViewModel>();
         services.AddTransient<RepositoryListViewModel>();
+        services.AddTransient<PullRequestListViewModel>();
         
         // Navigation service will be added here later
         // services.AddSingleton<INavigationService, NavigationService>();

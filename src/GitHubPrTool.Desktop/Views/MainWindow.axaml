@@ -117,6 +117,11 @@
                                 <views:RepositoryListView/>
                             </DataTemplate>
                             
+                            <!-- Pull Request List View Template -->
+                            <DataTemplate DataType="vm:PullRequestListViewModel">
+                                <views:PullRequestListView/>
+                            </DataTemplate>
+                            
                             <!-- Future templates for other views will be added here -->
                         </ContentControl.DataTemplates>
                     </ContentControl>

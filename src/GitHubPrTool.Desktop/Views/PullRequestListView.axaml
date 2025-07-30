@@ -1,0 +1,205 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:GitHubPrTool.Desktop.ViewModels"
+             xmlns:models="using:GitHubPrTool.Core.Models"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="900" d:DesignHeight="700"
+             x:Class="GitHubPrTool.Desktop.Views.PullRequestListView"
+             x:DataType="vm:PullRequestListViewModel">
+
+    <Design.DataContext>
+        <!-- Design-time data context for IntelliSense -->
+        <vm:PullRequestListViewModel/>
+    </Design.DataContext>
+
+    <Grid RowDefinitions="Auto,Auto,*,Auto">
+        <!-- Header -->
+        <StackPanel Grid.Row="0" Margin="0,0,0,16">
+            <TextBlock Text="📋 Pull Requests" 
+                       FontSize="20" 
+                       FontWeight="SemiBold" 
+                       Margin="0,0,0,8"/>
+            <TextBlock Text="{Binding RepositoryName, StringFormat='Repository: {0}'}" 
+                       Foreground="{DynamicResource SystemBaseMediumColorBrush}"/>
+        </StackPanel>
+
+        <!-- Search, Filter, and Sort Controls -->
+        <Border Grid.Row="1" 
+                Background="{DynamicResource SystemControlBackgroundBaseLowBrush}"
+                CornerRadius="6"
+                Padding="12"
+                Margin="0,0,0,16">
+            <Grid RowDefinitions="Auto,Auto" ColumnDefinitions="*,Auto">
+                <!-- Search Row -->
+                <StackPanel Grid.Row="0" Grid.ColumnSpan="2" Orientation="Horizontal" Spacing="8" Margin="0,0,0,12">
+                    <TextBox Name="SearchBox"
+                             Text="{Binding SearchText}"
+                             Watermark="Search pull requests by title, number, author..."
+                             Width="350"
+                             KeyDown="SearchBox_KeyDown"/>
+                    
+                    <Button Content="Load PRs" 
+                            Command="{Binding LoadPullRequestsCommand}"
+                            IsEnabled="{Binding !IsLoading}"/>
+                    
+                    <Button Content="🔄 Sync" 
+                            Command="{Binding SyncPullRequestsCommand}"
+                            IsEnabled="{Binding !IsLoading}"
+                            ToolTip.Tip="Sync pull requests from GitHub"/>
+                </StackPanel>
+
+                <!-- Filter and Sort Row -->
+                <StackPanel Grid.Row="1" Grid.Column="0" Orientation="Horizontal" Spacing="16">
+                    <StackPanel Orientation="Horizontal" Spacing="4">
+                        <TextBlock Text="State:" VerticalAlignment="Center"/>
+                        <ComboBox ItemsSource="{Binding StateFilters}"
+                                  SelectedItem="{Binding SelectedStateFilter}"
+                                  MinWidth="100"/>
+                    </StackPanel>
+                    
+                    <StackPanel Orientation="Horizontal" Spacing="4">
+                        <TextBlock Text="Sort by:" VerticalAlignment="Center"/>
+                        <ComboBox ItemsSource="{Binding SortOptions}"
+                                  SelectedItem="{Binding SortBy}"
+                                  MinWidth="100"/>
+                    </StackPanel>
+                    
+                    <CheckBox Content="Descending" IsChecked="{Binding SortDescending}"/>
+                </StackPanel>
+
+                <!-- Results Count -->
+                <TextBlock Grid.Row="1" Grid.Column="1" 
+                           Text="{Binding PullRequests.Count}"
+                           VerticalAlignment="Center"
+                           HorizontalAlignment="Right"
+                           Foreground="{DynamicResource SystemBaseMediumColorBrush}"/>
+            </Grid>
+        </Border>
+
+        <!-- Pull Request List -->
+        <ListBox Grid.Row="2" 
+                 ItemsSource="{Binding PullRequests}"
+                 SelectedItem="{Binding SelectedPullRequest}">
+            <ListBox.ItemTemplate>
+                <DataTemplate DataType="models:PullRequest">
+                    <Border Padding="12" 
+                            Background="Transparent"
+                            CornerRadius="4"
+                            Margin="0,2">
+                        <Grid ColumnDefinitions="Auto,*,Auto,Auto">
+                            <!-- PR Icon and Number -->
+                            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8" VerticalAlignment="Top">
+                                <TextBlock Text="🔄" 
+                                           VerticalAlignment="Center"
+                                           IsVisible="{Binding !IsDraft}"/>
+                                <TextBlock Text="📝" 
+                                           VerticalAlignment="Center"
+                                           IsVisible="{Binding IsDraft}"/>
+                                <TextBlock Text="{Binding Number, StringFormat='#{0}'}" 
+                                           FontWeight="SemiBold"
+                                           VerticalAlignment="Center"/>
+                            </StackPanel>
+
+                            <!-- Title, Description, and Metadata -->
+                            <StackPanel Grid.Column="1" Margin="16,0">
+                                <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,0,0,4">
+                                    <TextBlock Text="{Binding Title}" 
+                                               FontWeight="SemiBold"
+                                               FontSize="14"
+                                               TextWrapping="Wrap"/>
+                                    <Border Background="{DynamicResource SystemControlBackgroundBaseMediumLowBrush}"
+                                            Padding="4,2"
+                                            CornerRadius="2">
+                                        <TextBlock Text="{Binding State}" 
+                                                   FontSize="10"
+                                                   VerticalAlignment="Center"/>
+                                    </Border>
+                                    <Border Background="{DynamicResource SystemControlBackgroundBaseMediumLowBrush}"
+                                            Padding="4,2"
+                                            CornerRadius="2"
+                                            IsVisible="{Binding IsDraft}">
+                                        <TextBlock Text="DRAFT" 
+                                                   FontSize="10"
+                                                   VerticalAlignment="Center"/>
+                                    </Border>
+                                </StackPanel>
+                                
+                                <TextBlock Text="{Binding Body}" 
+                                           Foreground="{DynamicResource SystemBaseMediumColorBrush}"
+                                           TextWrapping="Wrap"
+                                           MaxWidth="500"
+                                           MaxLines="2"
+                                           Margin="0,0,0,4"
+                                           IsVisible="{Binding !!Body}"/>
+                                
+                                <StackPanel Orientation="Horizontal" Spacing="16">
+                                    <TextBlock Text="{Binding Author.Login, StringFormat='by {0}'}" 
+                                               FontSize="12"
+                                               Foreground="{DynamicResource SystemBaseMediumColorBrush}"/>
+                                    <TextBlock Text="{Binding BaseBranch, StringFormat='→ {0}'}" 
+                                               FontSize="12"
+                                               Foreground="{DynamicResource SystemBaseMediumColorBrush}"/>
+                                    <StackPanel Orientation="Horizontal" Spacing="4" IsVisible="{Binding !!Commits}">
+                                        <TextBlock Text="📦" FontSize="10"/>
+                                        <TextBlock Text="{Binding Commits}" FontSize="12"/>
+                                    </StackPanel>
+                                    <StackPanel Orientation="Horizontal" Spacing="4" IsVisible="{Binding !!Additions}">
+                                        <TextBlock Text="+" FontSize="10" Foreground="Green"/>
+                                        <TextBlock Text="{Binding Additions}" FontSize="12" Foreground="Green"/>
+                                    </StackPanel>
+                                    <StackPanel Orientation="Horizontal" Spacing="4" IsVisible="{Binding !!Deletions}">
+                                        <TextBlock Text="-" FontSize="10" Foreground="Red"/>
+                                        <TextBlock Text="{Binding Deletions}" FontSize="12" Foreground="Red"/>
+                                    </StackPanel>
+                                </StackPanel>
+                            </StackPanel>
+
+                            <!-- Dates -->
+                            <StackPanel Grid.Column="2" VerticalAlignment="Center" Margin="16,0">
+                                <TextBlock Text="{Binding CreatedAt}" 
+                                           FontSize="12"
+                                           Foreground="{DynamicResource SystemBaseMediumColorBrush}"
+                                           HorizontalAlignment="Right"/>
+                                <TextBlock Text="{Binding UpdatedAt}" 
+                                           FontSize="10"
+                                           Foreground="{DynamicResource SystemBaseMediumColorBrush}"
+                                           HorizontalAlignment="Right"/>
+                            </StackPanel>
+
+                            <!-- Action Buttons -->
+                            <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center" Margin="16,0,0,0">
+                                <Button Content="💬 Comments" 
+                                        Command="{Binding $parent[ListBox].((vm:PullRequestListViewModel)DataContext).ViewCommentsCommand}"
+                                        Classes="outline"
+                                        FontSize="11"/>
+                                <Button Content="🔗 Open" 
+                                        Command="{Binding $parent[ListBox].((vm:PullRequestListViewModel)DataContext).OpenInBrowserCommand}"
+                                        Classes="outline"
+                                        FontSize="11"/>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+
+        <!-- Status Bar -->
+        <Border Grid.Row="3" 
+                Background="{DynamicResource SystemControlBackgroundBaseLowBrush}"
+                Padding="12,8"
+                Margin="0,16,0,0"
+                CornerRadius="6">
+            <Grid ColumnDefinitions="*,Auto">
+                <TextBlock Grid.Column="0" 
+                           Text="{Binding StatusMessage}" 
+                           VerticalAlignment="Center"/>
+                
+                <ProgressBar Grid.Column="1" 
+                             Width="100" 
+                             IsIndeterminate="True"
+                             IsVisible="{Binding IsLoading}"/>
+            </Grid>
+        </Border>
+    </Grid>
+</UserControl>

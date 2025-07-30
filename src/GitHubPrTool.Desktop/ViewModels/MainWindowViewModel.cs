@@ -39,18 +39,26 @@ public partial class MainWindowViewModel : ObservableObject
     public RepositoryListViewModel? RepositoryListViewModel { get; private set; }
 
     /// <summary>
+    /// Pull request list view model for navigation.
+    /// </summary>
+    public PullRequestListViewModel? PullRequestListViewModel { get; private set; }
+
+    /// <summary>
     /// Initializes a new instance of the MainWindowViewModel.
     /// </summary>
     /// <param name="authService">GitHub authentication service.</param>
     /// <param name="repositoryListViewModel">Repository list view model.</param>
+    /// <param name="pullRequestListViewModel">Pull request list view model.</param>
     /// <param name="logger">Logger for this view model.</param>
     public MainWindowViewModel(
         IAuthService authService, 
         RepositoryListViewModel repositoryListViewModel,
+        PullRequestListViewModel pullRequestListViewModel,
         ILogger<MainWindowViewModel> logger)
     {
         _authService = authService;
         RepositoryListViewModel = repositoryListViewModel;
+        PullRequestListViewModel = pullRequestListViewModel;
         _logger = logger;
         
         // Initialize authentication status
@@ -114,8 +122,8 @@ public partial class MainWindowViewModel : ObservableObject
     {
         StatusMessage = "Loading pull requests...";
         IsContentLoaded = true;
+        CurrentContent = PullRequestListViewModel;
         _logger.LogInformation("Navigating to pull requests view");
-        // TODO: Implement navigation to pull requests view
     }
 
     /// <summary>

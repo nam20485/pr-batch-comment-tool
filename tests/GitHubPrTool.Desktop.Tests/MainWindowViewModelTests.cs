@@ -20,22 +20,29 @@ public class MainWindowViewModelTests
         _mockAuthService = new Mock<IAuthService>();
         _mockLogger = new Mock<ILogger<MainWindowViewModel>>();
         
-        // Create a mock for the RepositoryListViewModel
-        // Since it has dependencies, we'll create a simple mock
+        // Create mocks for the ViewModels
         var mockGitHubRepo = new Mock<IGitHubRepository>();
         var mockDataSync = new Mock<IDataSyncService>();
         var mockAuth = new Mock<IAuthService>();
         var mockRepoLogger = new Mock<ILogger<RepositoryListViewModel>>();
+        var mockPrLogger = new Mock<ILogger<PullRequestListViewModel>>();
         
         var repositoryListViewModel = new RepositoryListViewModel(
             mockGitHubRepo.Object, 
             mockDataSync.Object, 
             mockAuth.Object, 
             mockRepoLogger.Object);
+            
+        var pullRequestListViewModel = new PullRequestListViewModel(
+            mockGitHubRepo.Object, 
+            mockDataSync.Object, 
+            mockAuth.Object, 
+            mockPrLogger.Object);
         
         _viewModel = new MainWindowViewModel(
             _mockAuthService.Object, 
             repositoryListViewModel, 
+            pullRequestListViewModel,
             _mockLogger.Object);
     }
 
@@ -76,6 +83,8 @@ public class MainWindowViewModelTests
         // Assert
         _viewModel.StatusMessage.Should().Be("Loading pull requests...");
         _viewModel.IsContentLoaded.Should().BeTrue();
+        _viewModel.CurrentContent.Should().NotBeNull();
+        _viewModel.CurrentContent.Should().BeOfType<PullRequestListViewModel>();
     }
 
     [Fact]
