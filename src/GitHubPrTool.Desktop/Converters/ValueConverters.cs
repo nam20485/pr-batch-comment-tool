@@ -244,3 +244,41 @@ public class IntToVisibilityConverter : IValueConverter
         throw new NotImplementedException();
     }
 }
+
+/// <summary>
+/// Converter that checks if a comment is selected.
+/// </summary>
+public class CommentSelectionConverter : IValueConverter
+{
+    /// <summary>
+    /// Singleton instance of the converter.
+    /// </summary>
+    public static readonly CommentSelectionConverter Instance = new();
+
+    /// <summary>
+    /// Converts by checking if the comment is in the selected collection.
+    /// </summary>
+    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        if (value is System.Collections.IEnumerable selectedComments && parameter is Comment comment)
+        {
+            foreach (var selectedComment in selectedComments)
+            {
+                if (selectedComment is Comment selected && selected.Id == comment.Id)
+                {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Not implemented for this converter.
+    /// </summary>
+    public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        throw new NotImplementedException();
+    }
+}
