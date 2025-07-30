@@ -12,22 +12,28 @@ namespace GitHubPrTool.Desktop.Tests;
 public class MainWindowViewModelTests
 {
     private readonly Mock<IAuthService> _mockAuthService;
+    private readonly Mock<IDataSyncService> _mockDataSyncService;
+    private readonly Mock<INetworkConnectivityService> _mockNetworkConnectivityService;
     private readonly Mock<ILogger<MainWindowViewModel>> _mockLogger;
     private readonly MainWindowViewModel _viewModel;
 
     public MainWindowViewModelTests()
     {
         _mockAuthService = new Mock<IAuthService>();
+        _mockDataSyncService = new Mock<IDataSyncService>();
+        _mockNetworkConnectivityService = new Mock<INetworkConnectivityService>();
         _mockLogger = new Mock<ILogger<MainWindowViewModel>>();
         
         // Create mocks for the ViewModels
         var mockGitHubRepo = new Mock<IGitHubRepository>();
         var mockDataSync = new Mock<IDataSyncService>();
+        var mockSearchService = new Mock<ISearchService>();
         var mockAuth = new Mock<IAuthService>();
         var mockRepoLogger = new Mock<ILogger<RepositoryListViewModel>>();
         var mockPrLogger = new Mock<ILogger<PullRequestListViewModel>>();
         var mockPrDetailLogger = new Mock<ILogger<PullRequestDetailViewModel>>();
         var mockCommentLogger = new Mock<ILogger<CommentListViewModel>>();
+        var mockSearchLogger = new Mock<ILogger<GlobalSearchViewModel>>();
         
         var repositoryListViewModel = new RepositoryListViewModel(
             mockGitHubRepo.Object, 
@@ -50,13 +56,20 @@ public class MainWindowViewModelTests
             mockGitHubRepo.Object,
             mockDataSync.Object,
             mockCommentLogger.Object);
+            
+        var globalSearchViewModel = new GlobalSearchViewModel(
+            mockSearchService.Object,
+            mockSearchLogger.Object);
         
         _viewModel = new MainWindowViewModel(
-            _mockAuthService.Object, 
+            _mockAuthService.Object,
+            _mockDataSyncService.Object,
+            _mockNetworkConnectivityService.Object,
             repositoryListViewModel, 
             pullRequestListViewModel,
             pullRequestDetailViewModel,
             commentListViewModel,
+            globalSearchViewModel,
             _mockLogger.Object);
     }
 

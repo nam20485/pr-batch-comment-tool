@@ -14,6 +14,8 @@ namespace GitHubPrTool.Desktop.ViewModels;
 public partial class MainWindowViewModel : ObservableObject
 {
     private readonly IAuthService _authService;
+    private readonly IDataSyncService _dataSyncService;
+    private readonly INetworkConnectivityService _networkConnectivityService;
     private readonly ILogger<MainWindowViewModel> _logger;
 
     [ObservableProperty]
@@ -33,6 +35,24 @@ public partial class MainWindowViewModel : ObservableObject
 
     [ObservableProperty]
     private object? _currentContent;
+
+    [ObservableProperty]
+    private bool _isSyncing;
+
+    [ObservableProperty]
+    private string _syncStatus = "";
+
+    [ObservableProperty]
+    private int _syncProgress;
+
+    [ObservableProperty]
+    private bool _isOnline;
+
+    [ObservableProperty]
+    private bool _isGitHubReachable;
+
+    [ObservableProperty]
+    private bool _isOfflineMode;
 
     /// <summary>
     /// Repository list view model for navigation.
@@ -55,27 +75,41 @@ public partial class MainWindowViewModel : ObservableObject
     public CommentListViewModel? CommentListViewModel { get; private set; }
 
     /// <summary>
+    /// Global search view model for navigation.
+    /// </summary>
+    public GlobalSearchViewModel? GlobalSearchViewModel { get; private set; }
+
+    /// <summary>
     /// Initializes a new instance of the MainWindowViewModel.
     /// </summary>
     /// <param name="authService">GitHub authentication service.</param>
+    /// <param name="dataSyncService">Data synchronization service.</param>
+    /// <param name="networkConnectivityService">Network connectivity service.</param>
     /// <param name="repositoryListViewModel">Repository list view model.</param>
     /// <param name="pullRequestListViewModel">Pull request list view model.</param>
     /// <param name="pullRequestDetailViewModel">Pull request detail view model.</param>
     /// <param name="commentListViewModel">Comment list view model.</param>
+    /// <param name="globalSearchViewModel">Global search view model.</param>
     /// <param name="logger">Logger for this view model.</param>
     public MainWindowViewModel(
         IAuthService authService, 
+        IDataSyncService dataSyncService,
+        INetworkConnectivityService networkConnectivityService,
         RepositoryListViewModel repositoryListViewModel,
         PullRequestListViewModel pullRequestListViewModel,
         PullRequestDetailViewModel pullRequestDetailViewModel,
         CommentListViewModel commentListViewModel,
+        GlobalSearchViewModel globalSearchViewModel,
         ILogger<MainWindowViewModel> logger)
     {
         _authService = authService;
+        _dataSyncService = dataSyncService;
+        _networkConnectivityService = networkConnectivityService;
         RepositoryListViewModel = repositoryListViewModel;
         PullRequestListViewModel = pullRequestListViewModel;
         PullRequestDetailViewModel = pullRequestDetailViewModel;
         CommentListViewModel = commentListViewModel;
+        GlobalSearchViewModel = globalSearchViewModel;
         _logger = logger;
         
         // Wire up navigation from pull request list to detail view
@@ -84,8 +118,20 @@ public partial class MainWindowViewModel : ObservableObject
             PullRequestListViewModel.NavigateToPullRequestDetail = NavigateToPullRequestDetailAsync;
         }
         
+        // Wire up sync progress events
+        _dataSyncService.SyncProgressChanged += OnSyncProgressChanged;
+        
+        // Wire up network connectivity events
+        _networkConnectivityService.ConnectivityChanged += OnConnectivityChanged;
+        
         // Initialize authentication status
         UpdateAuthenticationStatus();
+        
+        // Initialize connectivity monitoring
+        _networkConnectivityService.StartMonitoring();
+        
+        // Initial connectivity check
+        _ = Task.Run(async () => await _networkConnectivityService.CheckConnectivityAsync());
     }
 
     /// <summary>
@@ -162,6 +208,18 @@ public partial class MainWindowViewModel : ObservableObject
     }
 
     /// <summary>
+    /// Command to navigate to global search view.
+    /// </summary>
+    [RelayCommand]
+    private void NavigateToSearch()
+    {
+        StatusMessage = "Loading search...";
+        IsContentLoaded = true;
+        CurrentContent = GlobalSearchViewModel;
+        _logger.LogInformation("Navigating to global search view");
+    }
+
+    /// <summary>
     /// Navigates to the pull request detail view for the specified pull request.
     /// </summary>
     /// <param name="pullRequest">Pull request to show details for.</param>
@@ -225,7 +283,103 @@ public partial class MainWindowViewModel : ObservableObject
     private void Exit()
     {
         _logger.LogInformation("Application exit requested");
+        
+        // Clean up network monitoring
+        _networkConnectivityService.StopMonitoring();
+        
         System.Environment.Exit(0);
+    }
+
+    /// <summary>
+    /// Command to manually refresh data from GitHub.
+    /// </summary>
+    [RelayCommand]
+    private async Task RefreshDataAsync()
+    {
+        if (!IsAuthenticated)
+        {
+            StatusMessage = "Please authenticate first";
+            return;
+        }
+
+        if (IsSyncing)
+        {
+            _logger.LogWarning("Sync already in progress");
+            return;
+        }
+
+        try
+        {
+            _logger.LogInformation("Starting manual data refresh");
+            
+            // Refresh repositories first
+            await _dataSyncService.SyncRepositoriesAsync(forceRefresh: true);
+            
+            StatusMessage = "Data refresh completed successfully";
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Data refresh failed: {ex.Message}";
+            _logger.LogError(ex, "Error during manual data refresh");
+        }
+    }
+
+    /// <summary>
+    /// Command to toggle offline mode.
+    /// </summary>
+    [RelayCommand]
+    private void ToggleOfflineMode()
+    {
+        IsOfflineMode = !IsOfflineMode;
+        StatusMessage = IsOfflineMode ? "Offline mode enabled" : "Offline mode disabled";
+        _logger.LogInformation("Offline mode {State}", IsOfflineMode ? "enabled" : "disabled");
+    }
+
+    /// <summary>
+    /// Event handler for sync progress changes.
+    /// </summary>
+    private void OnSyncProgressChanged(object? sender, SyncProgressEventArgs e)
+    {
+        IsSyncing = e.ProgressPercentage < 100;
+        SyncProgress = e.ProgressPercentage;
+        SyncStatus = e.Message;
+        
+        if (IsSyncing)
+        {
+            StatusMessage = $"Syncing: {e.Message}";
+        }
+        else if (e.ProgressPercentage == 100)
+        {
+            StatusMessage = "Sync completed successfully";
+        }
+    }
+
+    /// <summary>
+    /// Event handler for network connectivity changes.
+    /// </summary>
+    private void OnConnectivityChanged(object? sender, NetworkConnectivityChangedEventArgs e)
+    {
+        IsOnline = e.IsConnected;
+        IsGitHubReachable = e.IsGitHubReachable;
+        
+        ConnectionStatus = (e.IsConnected, e.IsGitHubReachable) switch
+        {
+            (true, true) => "Online",
+            (true, false) => "Limited",
+            (false, false) => "Offline",
+            _ => "Unknown"
+        };
+
+        if (!e.WasConnected && e.IsConnected)
+        {
+            StatusMessage = "Connection restored - " + e.Message;
+        }
+        else if (e.WasConnected && !e.IsConnected)
+        {
+            StatusMessage = "Connection lost - " + e.Message;
+        }
+
+        _logger.LogInformation("Connectivity changed: {Message}", e.Message);
     }
 
     /// <summary>
@@ -243,8 +397,17 @@ public partial class MainWindowViewModel : ObservableObject
             if (IsAuthenticated)
             {
                 CurrentUser = _authService.CurrentUser?.Login;
-                ConnectionStatus = "Online";
                 StatusMessage = $"Connected as {CurrentUser}";
+                
+                // Update connection status based on current connectivity
+                if (IsOnline && IsGitHubReachable)
+                {
+                    ConnectionStatus = "Online";
+                }
+                else
+                {
+                    ConnectionStatus = IsOnline ? "Limited" : "Offline";
+                }
             }
             else
             {
