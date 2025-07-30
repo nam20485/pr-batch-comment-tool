@@ -63,9 +63,6 @@ public class GitHubPrToolDbContext : DbContext
             .HasIndex(r => r.FullName)
             .IsUnique();
 
-        modelBuilder.Entity<Repository>()
-            .HasIndex(r => new { r.Owner, r.Name });
-
         // Pull Request indexes
         modelBuilder.Entity<PullRequest>()
             .HasIndex(pr => new { pr.RepositoryId, pr.Number })
