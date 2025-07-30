@@ -106,6 +106,10 @@ public static class UIServiceExtensions
         services.AddTransient<PullRequestDetailViewModel>();
         services.AddTransient<CommentListViewModel>();
         
+        // Add Phase 6 ViewModels
+        services.AddTransient<GlobalSearchViewModel>();
+        services.AddTransient<CommentExportImportViewModel>();
+        
         // Navigation service will be added here later
         // services.AddSingleton<INavigationService, NavigationService>();
         

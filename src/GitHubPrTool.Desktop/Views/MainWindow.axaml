@@ -59,6 +59,11 @@
                             Margin="0,4"
                             Command="{Binding NavigateToCommentsCommand}"/>
                     
+                    <Button Content="Global Search" 
+                            HorizontalAlignment="Stretch"
+                            Margin="0,4"
+                            Command="{Binding NavigateToSearchCommand}"/>
+                    
                     <Separator Margin="0,12"/>
                     
                     <TextBlock Text="Quick Actions" 
@@ -132,6 +137,11 @@
                                 <views:CommentListView/>
                             </DataTemplate>
                             
+                            <!-- Global Search View Template -->
+                            <DataTemplate DataType="vm:GlobalSearchViewModel">
+                                <views:GlobalSearchView/>
+                            </DataTemplate>
+                            
                             <!-- Future templates for other views will be added here -->
                         </ContentControl.DataTemplates>
                     </ContentControl>
@@ -143,17 +153,31 @@
         <Border Grid.Row="2" 
                 Background="{DynamicResource SystemControlBackgroundBaseLowBrush}"
                 Padding="8,4">
-            <Grid ColumnDefinitions="*,Auto,Auto">
+            <Grid ColumnDefinitions="*,Auto,Auto,Auto,Auto">
                 <TextBlock Grid.Column="0" 
                            Text="{Binding StatusMessage}" 
                            VerticalAlignment="Center"/>
                 
-                <TextBlock Grid.Column="1" 
+                <!-- Sync Progress -->
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="16,0" IsVisible="{Binding IsSyncing}">
+                    <TextBlock Text="Syncing..." VerticalAlignment="Center" Margin="0,0,8,0"/>
+                    <ProgressBar Value="{Binding SyncProgress}" Maximum="100" Width="100" Height="16" VerticalAlignment="Center"/>
+                </StackPanel>
+                
+                <!-- Refresh Button -->
+                <Button Grid.Column="2" 
+                        Content="🔄 Refresh" 
+                        Command="{Binding RefreshDataCommand}" 
+                        IsEnabled="{Binding !IsSyncing}"
+                        Margin="8,0"
+                        VerticalAlignment="Center"/>
+                
+                <TextBlock Grid.Column="3" 
                            Text="{Binding ConnectionStatus}" 
                            VerticalAlignment="Center"
                            Margin="16,0"/>
                 
-                <TextBlock Grid.Column="2" 
+                <TextBlock Grid.Column="4" 
                            Text="{Binding CurrentUser, StringFormat='User: {0}'}" 
                            VerticalAlignment="Center"
                            IsVisible="{Binding IsAuthenticated}"/>
