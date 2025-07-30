@@ -1,0 +1,137 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:GitHubPrTool.Desktop.ViewModels"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="800"
+        x:Class="GitHubPrTool.Desktop.Views.MainWindow"
+        x:DataType="vm:MainWindowViewModel"
+        Title="GitHub PR Review Assistant"
+        Width="1200" Height="800"
+        MinWidth="800" MinHeight="600">
+
+    <Design.DataContext>
+        <!-- Design-time data context for IntelliSense -->
+        <vm:MainWindowViewModel/>
+    </Design.DataContext>
+
+    <Grid RowDefinitions="Auto,*,Auto">
+        <!-- Menu Bar -->
+        <Menu Grid.Row="0">
+            <MenuItem Header="_File">
+                <MenuItem Header="_Settings" Command="{Binding OpenSettingsCommand}"/>
+                <Separator/>
+                <MenuItem Header="E_xit" Command="{Binding ExitCommand}"/>
+            </MenuItem>
+            <MenuItem Header="_Help">
+                <MenuItem Header="_About" Command="{Binding ShowAboutCommand}"/>
+            </MenuItem>
+        </Menu>
+
+        <!-- Main Content Area -->
+        <DockPanel Grid.Row="1" Margin="8">
+            <!-- Sidebar for Navigation -->
+            <Border DockPanel.Dock="Left" 
+                    Width="250" 
+                    Background="{DynamicResource SystemControlBackgroundBaseLowBrush}"
+                    CornerRadius="4"
+                    Margin="0,0,8,0">
+                <StackPanel Margin="12">
+                    <TextBlock Text="Navigation" 
+                               FontWeight="SemiBold" 
+                               FontSize="16" 
+                               Margin="0,0,0,12"/>
+                    
+                    <Button Content="Repositories" 
+                            Classes="primary"
+                            HorizontalAlignment="Stretch"
+                            Margin="0,4"
+                            Command="{Binding NavigateToRepositoriesCommand}"/>
+                    
+                    <Button Content="Pull Requests" 
+                            HorizontalAlignment="Stretch"
+                            Margin="0,4"
+                            Command="{Binding NavigateToPullRequestsCommand}"/>
+                    
+                    <Button Content="Comments" 
+                            HorizontalAlignment="Stretch"
+                            Margin="0,4"
+                            Command="{Binding NavigateToCommentsCommand}"/>
+                    
+                    <Separator Margin="0,12"/>
+                    
+                    <TextBlock Text="Quick Actions" 
+                               FontWeight="SemiBold" 
+                               Margin="0,0,0,8"/>
+                    
+                    <Button Content="Batch Comment" 
+                            HorizontalAlignment="Stretch"
+                            Margin="0,4"
+                            Command="{Binding BatchCommentCommand}"
+                            IsEnabled="{Binding IsAuthenticated}"/>
+                </StackPanel>
+            </Border>
+
+            <!-- Main Content Panel -->
+            <Border Background="{DynamicResource SystemControlBackgroundBaseLowBrush}"
+                    CornerRadius="4">
+                <Grid Margin="16">
+                    <!-- Welcome Content (shown when no specific view is selected) -->
+                    <StackPanel HorizontalAlignment="Center" 
+                                VerticalAlignment="Center"
+                                IsVisible="{Binding !IsContentLoaded}">
+                        <TextBlock Text="🚀 GitHub PR Review Assistant" 
+                                   FontSize="24" 
+                                   FontWeight="Bold" 
+                                   HorizontalAlignment="Center"
+                                   Margin="0,0,0,16"/>
+                        
+                        <TextBlock Text="Welcome to your productivity tool for GitHub PR reviews!" 
+                                   FontSize="16" 
+                                   HorizontalAlignment="Center"
+                                   Margin="0,0,0,24"/>
+                        
+                        <Button Content="🔐 Authenticate with GitHub" 
+                                Classes="primary"
+                                HorizontalAlignment="Center"
+                                Command="{Binding AuthenticateCommand}"
+                                IsVisible="{Binding !IsAuthenticated}"/>
+                        
+                        <StackPanel IsVisible="{Binding IsAuthenticated}" HorizontalAlignment="Center">
+                            <TextBlock Text="✅ Successfully authenticated!" 
+                                       HorizontalAlignment="Center"
+                                       Foreground="Green"
+                                       Margin="0,0,0,12"/>
+                            <TextBlock Text="Select an option from the navigation panel to get started." 
+                                       HorizontalAlignment="Center"/>
+                        </StackPanel>
+                    </StackPanel>
+                    
+                    <!-- Content area for different views will be added here -->
+                    <!-- This will be populated when navigation is implemented -->
+                </Grid>
+            </Border>
+        </DockPanel>
+
+        <!-- Status Bar -->
+        <Border Grid.Row="2" 
+                Background="{DynamicResource SystemControlBackgroundBaseLowBrush}"
+                Padding="8,4">
+            <Grid ColumnDefinitions="*,Auto,Auto">
+                <TextBlock Grid.Column="0" 
+                           Text="{Binding StatusMessage}" 
+                           VerticalAlignment="Center"/>
+                
+                <TextBlock Grid.Column="1" 
+                           Text="{Binding ConnectionStatus}" 
+                           VerticalAlignment="Center"
+                           Margin="16,0"/>
+                
+                <TextBlock Grid.Column="2" 
+                           Text="{Binding CurrentUser, StringFormat='User: {0}'}" 
+                           VerticalAlignment="Center"
+                           IsVisible="{Binding IsAuthenticated}"/>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>
