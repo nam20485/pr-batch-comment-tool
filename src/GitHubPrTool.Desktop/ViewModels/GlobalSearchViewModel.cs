@@ -118,11 +118,11 @@ public partial class GlobalSearchViewModel : ObservableObject
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
         // Set up property change handlers
-        PropertyChanged += async (_, e) =>
+        PropertyChanged += (_, e) =>
         {
             if (e.PropertyName == nameof(SearchQuery))
             {
-                await LoadSearchSuggestionsAsync();
+                _ = SafeExecuteAsync(LoadSearchSuggestionsAsync);
             }
         };
     }
