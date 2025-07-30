@@ -39,9 +39,9 @@ public class SearchService : ISearchService
         // Search repositories if enabled
         if (searchOptions.IncludeRepositories)
         {
-            tasks.Add(Task.Run(async () =>
+            tasks.Add(SearchRepositoriesAsync(query, cancellationToken).ContinueWith(task =>
             {
-                var results = await SearchRepositoriesAsync(query, cancellationToken);
+                var results = task.Result;
                 lock (repositories)
                 {
                     repositories.AddRange(results.Take(searchOptions.MaxResultsPerCategory));
