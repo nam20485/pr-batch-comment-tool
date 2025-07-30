@@ -31,9 +31,11 @@ public class NetworkConnectivityService : INetworkConnectivityService, IDisposab
         {
             Timeout = TimeSpan.FromSeconds(10)
         };
+    }
 
-        // Initialize connectivity status
-        _ = Task.Run(async () => await CheckConnectivityAsync());
+    public async Task InitializeAsync(CancellationToken cancellationToken = default)
+    {
+        await CheckConnectivityAsync(cancellationToken);
     }
 
     public async Task<bool> CheckConnectivityAsync(CancellationToken cancellationToken = default)
