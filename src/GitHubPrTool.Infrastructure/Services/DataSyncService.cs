@@ -157,9 +157,34 @@ public class DataSyncService : IDataSyncService
                 SortDirection = SortDirection.Descending
             };
 
-            var githubPrs = await _gitHubClient.PullRequest.GetAllForRepository(repo.Owner.Login, repo.Name, request);
-            _logger.LogInformation("Retrieved {Count} pull requests for repository {Repository}", githubPrs.Count, repo.Name);
+            var githubPrs = new List<PullRequest>();
+            var page = 1;
+            const int pageSize = 100;
 
+            while (true)
+            {
+                var options = new ApiOptions
+                {
+                    PageSize = pageSize,
+                    PageCount = 1,
+                    StartPage = page
+                };
+
+                var prsPage = await _gitHubClient.PullRequest.GetAllForRepository(repo.Owner.Login, repo.Name, request, options);
+                if (prsPage.Count == 0)
+                {
+                    break;
+                }
+
+                githubPrs.AddRange(prsPage);
+                _logger.LogInformation("Retrieved {Count} pull requests from page {Page} for repository {Repository}", prsPage.Count, page, repo.Name);
+
+                page++;
+
+                cancellationToken.ThrowIfCancellationRequested();
+            }
+
+            _logger.LogInformation("Retrieved a total of {Count} pull requests for repository {Repository}", githubPrs.Count, repo.Name);
             OnSyncProgressChanged("Pull Requests", 25, "Processing pull requests...", 0, githubPrs.Count);
 
             var syncedCount = 0;
