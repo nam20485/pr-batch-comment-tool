@@ -376,9 +376,21 @@ public partial class CommentListViewModel : ObservableObject
         StatusMessage = $"Duplicating {SelectedComments.Count} selected comments...";
         _logger.LogInformation("Duplicating {Count} selected comments", SelectedComments.Count);
         
-        // TODO: Implement actual comment duplication logic
-        // This will integrate with the batch comment functionality
-        StatusMessage = $"TODO: Duplicate {SelectedComments.Count} comments (feature pending)";
+        foreach (var comment in SelectedComments)
+        {
+            var duplicatedComment = new Comment
+            {
+                Id = Guid.NewGuid().ToString(), // Generate a unique ID for the duplicated comment
+                Author = comment.Author,
+                Content = comment.Content,
+                CreatedAt = DateTime.Now,
+                UpdatedAt = DateTime.Now
+            };
+            Comments.Add(duplicatedComment);
+        }
+
+        StatusMessage = $"{SelectedComments.Count} comments duplicated successfully.";
+        _logger.LogInformation("{Count} comments duplicated successfully", SelectedComments.Count);
     }
 
     /// <summary>
