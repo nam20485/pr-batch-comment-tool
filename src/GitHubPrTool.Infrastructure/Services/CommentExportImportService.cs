@@ -365,7 +365,7 @@ public class CommentExportImportService : ICommentExportImportService
         if (string.IsNullOrEmpty(value))
             return "";
 
-        if (value.Contains(',') || value.Contains('"') || value.Contains('\n') || value.Contains('\r'))
+        if (value.IndexOfAny(new[] { ',', '"', '\n', '\r' }) >= 0)
         {
             return "\"" + value.Replace("\"", "\"\"") + "\"";
         }
