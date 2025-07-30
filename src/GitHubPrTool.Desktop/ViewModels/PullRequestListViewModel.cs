@@ -19,6 +19,11 @@ public partial class PullRequestListViewModel : ObservableObject
     private Repository? _currentRepository;
     private List<PullRequest> _allPullRequests = new();
 
+    /// <summary>
+    /// Navigation delegate for navigating to pull request details.
+    /// </summary>
+    public Func<PullRequest, Task>? NavigateToPullRequestDetail { get; set; }
+
     [ObservableProperty]
     private ObservableCollection<PullRequest> _pullRequests = new();
 
@@ -187,7 +192,7 @@ public partial class PullRequestListViewModel : ObservableObject
     /// Command to view comments for the selected pull request.
     /// </summary>
     [RelayCommand]
-    private void ViewComments()
+    private async Task ViewCommentsAsync()
     {
         if (SelectedPullRequest == null)
         {
@@ -195,11 +200,18 @@ public partial class PullRequestListViewModel : ObservableObject
             return;
         }
 
-        _logger.LogInformation("Navigating to comments for PR: {PRNumber}", SelectedPullRequest.Number);
-        StatusMessage = $"Loading comments for PR #{SelectedPullRequest.Number}...";
+        _logger.LogInformation("Navigating to detailed view for PR: {PRNumber}", SelectedPullRequest.Number);
+        StatusMessage = $"Loading details for PR #{SelectedPullRequest.Number}...";
         
-        // TODO: Navigate to comments view with selected pull request
-        // This will be implemented when we add navigation service
+        if (NavigateToPullRequestDetail != null)
+        {
+            await NavigateToPullRequestDetail(SelectedPullRequest);
+        }
+        else
+        {
+            StatusMessage = "Navigation not configured";
+            _logger.LogWarning("NavigateToPullRequestDetail delegate is not set");
+        }
     }
 
     /// <summary>

@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using GitHubPrTool.Core.Interfaces;
+using GitHubPrTool.Core.Models;
 using Microsoft.Extensions.Logging;
 
 namespace GitHubPrTool.Desktop.ViewModels;
@@ -44,22 +45,44 @@ public partial class MainWindowViewModel : ObservableObject
     public PullRequestListViewModel? PullRequestListViewModel { get; private set; }
 
     /// <summary>
+    /// Pull request detail view model for navigation.
+    /// </summary>
+    public PullRequestDetailViewModel? PullRequestDetailViewModel { get; private set; }
+
+    /// <summary>
+    /// Comment list view model for navigation.
+    /// </summary>
+    public CommentListViewModel? CommentListViewModel { get; private set; }
+
+    /// <summary>
     /// Initializes a new instance of the MainWindowViewModel.
     /// </summary>
     /// <param name="authService">GitHub authentication service.</param>
     /// <param name="repositoryListViewModel">Repository list view model.</param>
     /// <param name="pullRequestListViewModel">Pull request list view model.</param>
+    /// <param name="pullRequestDetailViewModel">Pull request detail view model.</param>
+    /// <param name="commentListViewModel">Comment list view model.</param>
     /// <param name="logger">Logger for this view model.</param>
     public MainWindowViewModel(
         IAuthService authService, 
         RepositoryListViewModel repositoryListViewModel,
         PullRequestListViewModel pullRequestListViewModel,
+        PullRequestDetailViewModel pullRequestDetailViewModel,
+        CommentListViewModel commentListViewModel,
         ILogger<MainWindowViewModel> logger)
     {
         _authService = authService;
         RepositoryListViewModel = repositoryListViewModel;
         PullRequestListViewModel = pullRequestListViewModel;
+        PullRequestDetailViewModel = pullRequestDetailViewModel;
+        CommentListViewModel = commentListViewModel;
         _logger = logger;
+        
+        // Wire up navigation from pull request list to detail view
+        if (PullRequestListViewModel != null)
+        {
+            PullRequestListViewModel.NavigateToPullRequestDetail = NavigateToPullRequestDetailAsync;
+        }
         
         // Initialize authentication status
         UpdateAuthenticationStatus();
@@ -134,8 +157,32 @@ public partial class MainWindowViewModel : ObservableObject
     {
         StatusMessage = "Loading comments...";
         IsContentLoaded = true;
+        CurrentContent = CommentListViewModel;
         _logger.LogInformation("Navigating to comments view");
-        // TODO: Implement navigation to comments view
+    }
+
+    /// <summary>
+    /// Navigates to the pull request detail view for the specified pull request.
+    /// </summary>
+    /// <param name="pullRequest">Pull request to show details for.</param>
+    public async Task NavigateToPullRequestDetailAsync(PullRequest pullRequest)
+    {
+        if (PullRequestDetailViewModel == null)
+        {
+            _logger.LogWarning("PullRequestDetailViewModel is null, cannot navigate to PR detail");
+            return;
+        }
+
+        StatusMessage = $"Loading details for PR #{pullRequest.Number}...";
+        IsContentLoaded = true;
+        CurrentContent = PullRequestDetailViewModel;
+        
+        _logger.LogInformation("Navigating to pull request detail view for PR #{Number}", pullRequest.Number);
+        
+        // Load the pull request details
+        await PullRequestDetailViewModel.LoadPullRequestDetailAsync(pullRequest);
+        
+        StatusMessage = $"Viewing PR #{pullRequest.Number}: {pullRequest.Title}";
     }
 
     /// <summary>
