@@ -127,6 +127,11 @@
                                 <views:PullRequestDetailView/>
                             </DataTemplate>
                             
+                            <!-- Comment List View Template -->
+                            <DataTemplate DataType="vm:CommentListViewModel">
+                                <views:CommentListView/>
+                            </DataTemplate>
+                            
                             <!-- Future templates for other views will be added here -->
                         </ContentControl.DataTemplates>
                     </ContentControl>

@@ -1,0 +1,268 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:GitHubPrTool.Desktop.ViewModels"
+             xmlns:models="using:GitHubPrTool.Core.Models"
+             xmlns:converters="using:GitHubPrTool.Desktop.Converters"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="900" d:DesignHeight="700"
+             x:Class="GitHubPrTool.Desktop.Views.CommentListView"
+             x:DataType="vm:CommentListViewModel">
+
+    <Design.DataContext>
+        <!-- Design-time data context for IntelliSense -->
+        <vm:CommentListViewModel/>
+    </Design.DataContext>
+
+    <Grid RowDefinitions="Auto,Auto,*,Auto">
+        <!-- Header -->
+        <StackPanel Grid.Row="0" Margin="0,0,0,16">
+            <TextBlock Text="💬 Comments" 
+                       FontSize="20" 
+                       FontWeight="SemiBold" 
+                       Margin="0,0,0,8"/>
+            <TextBlock Text="{Binding PullRequestTitle}" 
+                       Foreground="{DynamicResource SystemBaseMediumColorBrush}"/>
+            
+            <!-- Loading Indicator -->
+            <ProgressBar IsIndeterminate="{Binding IsLoading}" 
+                         IsVisible="{Binding IsLoading}"
+                         Margin="0,8"/>
+        </StackPanel>
+
+        <!-- Filter and Action Controls -->
+        <Border Grid.Row="1" 
+                Background="{DynamicResource SystemControlBackgroundBaseLowBrush}"
+                CornerRadius="6"
+                Padding="16"
+                Margin="0,0,0,16">
+            <Grid RowDefinitions="Auto,Auto,Auto" ColumnDefinitions="*,*">
+                
+                <!-- Search and Quick Actions Row -->
+                <StackPanel Grid.Row="0" Grid.ColumnSpan="2" Orientation="Horizontal" Spacing="8" Margin="0,0,0,12">
+                    <TextBox Name="SearchBox"
+                             Text="{Binding SearchText}"
+                             Watermark="Search comments by content or author..."
+                             Width="300"/>
+                    
+                    <Button Content="🔄 Refresh" 
+                            Command="{Binding RefreshCommand}"
+                            IsEnabled="{Binding !IsLoading}"/>
+                    
+                    <Button Content="🧹 Clear Filters" 
+                            Command="{Binding ClearFiltersCommand}"/>
+                    
+                    <Button Content="{Binding ShowSelection, Converter={x:Static converters:BoolToSelectionTextConverter.Instance}}"
+                            Command="{Binding ToggleSelectionModeCommand}"
+                            Classes="outline"/>
+                </StackPanel>
+
+                <!-- Filter Controls Row -->
+                <StackPanel Grid.Row="1" Grid.Column="0" Orientation="Horizontal" Spacing="12" Margin="0,0,16,12">
+                    <StackPanel Spacing="4">
+                        <TextBlock Text="Type" FontSize="12" FontWeight="SemiBold"/>
+                        <ComboBox ItemsSource="{Binding AvailableTypeFilters}"
+                                  SelectedItem="{Binding SelectedTypeFilter}"
+                                  MinWidth="100"/>
+                    </StackPanel>
+                    
+                    <StackPanel Spacing="4">
+                        <TextBlock Text="Author" FontSize="12" FontWeight="SemiBold"/>
+                        <ComboBox ItemsSource="{Binding AvailableAuthors}"
+                                  SelectedItem="{Binding SelectedAuthorFilter}"
+                                  MinWidth="120"/>
+                    </StackPanel>
+                </StackPanel>
+
+                <!-- Sort and Date Controls Row -->
+                <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal" Spacing="12" Margin="0,0,0,12">
+                    <StackPanel Spacing="4">
+                        <TextBlock Text="Sort By" FontSize="12" FontWeight="SemiBold"/>
+                        <StackPanel Orientation="Horizontal" Spacing="4">
+                            <ComboBox ItemsSource="{Binding AvailableSortOptions}"
+                                      SelectedItem="{Binding SortBy}"
+                                      MinWidth="100"/>
+                            <ToggleButton Content="↓"
+                                          IsChecked="{Binding SortDescending}"
+                                          ToolTip.Tip="Toggle sort direction"
+                                          Width="30"/>
+                        </StackPanel>
+                    </StackPanel>
+                </StackPanel>
+
+                <!-- Date Filter Row -->
+                <StackPanel Grid.Row="2" Grid.ColumnSpan="2" Orientation="Horizontal" Spacing="12">
+                    <StackPanel Spacing="4">
+                        <TextBlock Text="Date From" FontSize="12" FontWeight="SemiBold"/>
+                        <DatePicker SelectedDate="{Binding DateFromFilter}"
+                                    MinWidth="120"/>
+                    </StackPanel>
+                    
+                    <StackPanel Spacing="4">
+                        <TextBlock Text="Date To" FontSize="12" FontWeight="SemiBold"/>
+                        <DatePicker SelectedDate="{Binding DateToFilter}"
+                                    MinWidth="120"/>
+                    </StackPanel>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Comments List -->
+        <Border Grid.Row="2" 
+                Background="{DynamicResource SystemControlBackgroundBaseLowBrush}"
+                CornerRadius="6"
+                Padding="8">
+            <ScrollViewer>
+                <Grid>
+                    <!-- Comments List -->
+                    <ItemsControl ItemsSource="{Binding Comments}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Background="{DynamicResource SystemControlBackgroundBaseMediumLowBrush}"
+                                        CornerRadius="6"
+                                        Padding="12"
+                                        Margin="0,0,0,8">
+                                    <Grid ColumnDefinitions="Auto,*,Auto">
+                                        <!-- Selection Checkbox -->
+                                        <CheckBox Grid.Column="0"
+                                                  IsVisible="{Binding $parent[UserControl].((vm:CommentListViewModel)DataContext).ShowSelection}"
+                                                  Margin="0,0,12,0"
+                                                  VerticalAlignment="Top"/>
+                                        
+                                        <!-- Comment Content -->
+                                        <StackPanel Grid.Column="1">
+                                            <!-- Comment Header -->
+                                            <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,0,0,8">
+                                                <TextBlock Text="{Binding Author.Login}" 
+                                                           FontWeight="SemiBold"/>
+                                                <TextBlock Text="{Binding CreatedAt, StringFormat='{}{0:MMM dd, yyyy HH:mm}'}" 
+                                                           FontSize="12" 
+                                                           Foreground="{DynamicResource SystemBaseMediumColorBrush}"/>
+                                                <Border Background="{Binding Type, Converter={x:Static converters:CommentTypeToColorConverter.Instance}}"
+                                                        Padding="4,2"
+                                                        CornerRadius="2">
+                                                    <TextBlock Text="{Binding Type}" 
+                                                               FontSize="10"
+                                                               Foreground="White"/>
+                                                </Border>
+                                                <Border Background="{DynamicResource SystemControlBackgroundBaseMediumBrush}"
+                                                        Padding="4,2"
+                                                        CornerRadius="2"
+                                                        IsVisible="{Binding !!Path}">
+                                                    <TextBlock Text="{Binding Path}" 
+                                                               FontSize="10"
+                                                               ToolTip.Tip="File path for review comments"/>
+                                                </Border>
+                                                <TextBlock Text="{Binding UpdatedAt, StringFormat='Updated: {0:MMM dd, HH:mm}'}" 
+                                                           FontSize="11" 
+                                                           Foreground="{DynamicResource SystemBaseMediumColorBrush}"
+                                                           IsVisible="{Binding UpdatedAt, Converter={x:Static converters:DateTimeToVisibilityConverter.Instance}}"/>
+                                            </StackPanel>
+                                            
+                                            <!-- Comment Body -->
+                                            <Border Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}"
+                                                    CornerRadius="4"
+                                                    Padding="8"
+                                                    Margin="0,0,0,8">
+                                                <ScrollViewer MaxHeight="150">
+                                                    <TextBlock Text="{Binding Body}" 
+                                                               TextWrapping="Wrap"/>
+                                                </ScrollViewer>
+                                            </Border>
+                                            
+                                            <!-- Comment Metadata -->
+                                            <StackPanel Orientation="Horizontal" Spacing="16" IsVisible="{Binding Position, Converter={x:Static converters:IntToVisibilityConverter.Instance}}">
+                                                <StackPanel Orientation="Horizontal" Spacing="4" IsVisible="{Binding !!Position}">
+                                                    <TextBlock Text="📍" FontSize="10"/>
+                                                    <TextBlock Text="{Binding Position, StringFormat='Line {0}'}" 
+                                                               FontSize="11" 
+                                                               Foreground="{DynamicResource SystemBaseMediumColorBrush}"/>
+                                                </StackPanel>
+                                                <StackPanel Orientation="Horizontal" Spacing="4" IsVisible="{Binding !!DiffHunk}">
+                                                    <TextBlock Text="🔍" FontSize="10"/>
+                                                    <TextBlock Text="Diff context available" 
+                                                               FontSize="11" 
+                                                               Foreground="{DynamicResource SystemBaseMediumColorBrush}"/>
+                                                </StackPanel>
+                                            </StackPanel>
+                                        </StackPanel>
+                                        
+                                        <!-- Action Buttons -->
+                                        <StackPanel Grid.Column="2" Orientation="Vertical" Spacing="4" VerticalAlignment="Top">
+                                            <Button Content="🔗"
+                                                    ToolTip.Tip="Open comment in browser"
+                                                    Classes="outline"
+                                                    Width="30"
+                                                    Height="30"
+                                                    FontSize="11"/>
+                                            <Button Content="📋"
+                                                    ToolTip.Tip="Copy comment"
+                                                    Classes="outline"
+                                                    Width="30"
+                                                    Height="30"
+                                                    FontSize="11"/>
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                    
+                    <!-- Empty State -->
+                    <StackPanel HorizontalAlignment="Center" 
+                                VerticalAlignment="Center"
+                                IsVisible="{Binding !Comments.Count}"
+                                Margin="0,50">
+                        <TextBlock Text="💬" 
+                                   FontSize="48" 
+                                   HorizontalAlignment="Center" 
+                                   Margin="0,0,0,16"/>
+                        <TextBlock Text="No Comments Found" 
+                                   FontSize="18" 
+                                   FontWeight="SemiBold" 
+                                   HorizontalAlignment="Center" 
+                                   Margin="0,0,0,8"/>
+                        <TextBlock Text="Try adjusting your filters or refresh to load comments." 
+                                   Foreground="{DynamicResource SystemBaseMediumColorBrush}"
+                                   HorizontalAlignment="Center"
+                                   TextAlignment="Center"/>
+                    </StackPanel>
+                </Grid>
+            </ScrollViewer>
+        </Border>
+
+        <!-- Status Bar and Selection Actions -->
+        <Border Grid.Row="3" 
+                Background="{DynamicResource SystemControlBackgroundBaseMediumLowBrush}"
+                CornerRadius="4"
+                Padding="12,8"
+                Margin="0,16,0,0">
+            <Grid ColumnDefinitions="*,Auto">
+                <!-- Status Message -->
+                <TextBlock Grid.Column="0"
+                           Text="{Binding StatusMessage}" 
+                           VerticalAlignment="Center"/>
+                
+                <!-- Selection Actions -->
+                <StackPanel Grid.Column="1" 
+                            Orientation="Horizontal" 
+                            Spacing="8"
+                            IsVisible="{Binding ShowSelection}">
+                    <Button Content="Select All" 
+                            Command="{Binding SelectAllCommentsCommand}"
+                            Classes="outline"
+                            FontSize="11"/>
+                    <Button Content="Clear Selection" 
+                            Command="{Binding ClearSelectionCommand}"
+                            Classes="outline"
+                            FontSize="11"/>
+                    <Button Content="{Binding SelectedComments.Count, StringFormat='Duplicate ({0})'}" 
+                            Command="{Binding DuplicateSelectedCommentsCommand}"
+                            IsEnabled="{Binding SelectedComments.Count}"
+                            Classes="primary"
+                            FontSize="11"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+    </Grid>
+</UserControl>

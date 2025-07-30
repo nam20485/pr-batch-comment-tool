@@ -50,24 +50,32 @@ public partial class MainWindowViewModel : ObservableObject
     public PullRequestDetailViewModel? PullRequestDetailViewModel { get; private set; }
 
     /// <summary>
+    /// Comment list view model for navigation.
+    /// </summary>
+    public CommentListViewModel? CommentListViewModel { get; private set; }
+
+    /// <summary>
     /// Initializes a new instance of the MainWindowViewModel.
     /// </summary>
     /// <param name="authService">GitHub authentication service.</param>
     /// <param name="repositoryListViewModel">Repository list view model.</param>
     /// <param name="pullRequestListViewModel">Pull request list view model.</param>
     /// <param name="pullRequestDetailViewModel">Pull request detail view model.</param>
+    /// <param name="commentListViewModel">Comment list view model.</param>
     /// <param name="logger">Logger for this view model.</param>
     public MainWindowViewModel(
         IAuthService authService, 
         RepositoryListViewModel repositoryListViewModel,
         PullRequestListViewModel pullRequestListViewModel,
         PullRequestDetailViewModel pullRequestDetailViewModel,
+        CommentListViewModel commentListViewModel,
         ILogger<MainWindowViewModel> logger)
     {
         _authService = authService;
         RepositoryListViewModel = repositoryListViewModel;
         PullRequestListViewModel = pullRequestListViewModel;
         PullRequestDetailViewModel = pullRequestDetailViewModel;
+        CommentListViewModel = commentListViewModel;
         _logger = logger;
         
         // Wire up navigation from pull request list to detail view
@@ -149,8 +157,8 @@ public partial class MainWindowViewModel : ObservableObject
     {
         StatusMessage = "Loading comments...";
         IsContentLoaded = true;
+        CurrentContent = CommentListViewModel;
         _logger.LogInformation("Navigating to comments view");
-        // TODO: Implement navigation to comments view
     }
 
     /// <summary>

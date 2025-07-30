@@ -27,6 +27,7 @@ public class MainWindowViewModelTests
         var mockRepoLogger = new Mock<ILogger<RepositoryListViewModel>>();
         var mockPrLogger = new Mock<ILogger<PullRequestListViewModel>>();
         var mockPrDetailLogger = new Mock<ILogger<PullRequestDetailViewModel>>();
+        var mockCommentLogger = new Mock<ILogger<CommentListViewModel>>();
         
         var repositoryListViewModel = new RepositoryListViewModel(
             mockGitHubRepo.Object, 
@@ -44,12 +45,18 @@ public class MainWindowViewModelTests
             mockGitHubRepo.Object,
             mockDataSync.Object,
             mockPrDetailLogger.Object);
+            
+        var commentListViewModel = new CommentListViewModel(
+            mockGitHubRepo.Object,
+            mockDataSync.Object,
+            mockCommentLogger.Object);
         
         _viewModel = new MainWindowViewModel(
             _mockAuthService.Object, 
             repositoryListViewModel, 
             pullRequestListViewModel,
             pullRequestDetailViewModel,
+            commentListViewModel,
             _mockLogger.Object);
     }
 
