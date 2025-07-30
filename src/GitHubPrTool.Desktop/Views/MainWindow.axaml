@@ -122,6 +122,11 @@
                                 <views:PullRequestListView/>
                             </DataTemplate>
                             
+                            <!-- Pull Request Detail View Template -->
+                            <DataTemplate DataType="vm:PullRequestDetailViewModel">
+                                <views:PullRequestDetailView/>
+                            </DataTemplate>
+                            
                             <!-- Future templates for other views will be added here -->
                         </ContentControl.DataTemplates>
                     </ContentControl>

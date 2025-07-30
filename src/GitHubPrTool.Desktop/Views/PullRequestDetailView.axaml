@@ -1,0 +1,377 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:GitHubPrTool.Desktop.ViewModels"
+             xmlns:models="using:GitHubPrTool.Core.Models"
+             xmlns:converters="using:GitHubPrTool.Desktop.Converters"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="900" d:DesignHeight="700"
+             x:Class="GitHubPrTool.Desktop.Views.PullRequestDetailView"
+             x:DataType="vm:PullRequestDetailViewModel">
+
+    <Design.DataContext>
+        <!-- Design-time data context for IntelliSense -->
+        <vm:PullRequestDetailViewModel/>
+    </Design.DataContext>
+
+    <ScrollViewer>
+        <Grid RowDefinitions="Auto,Auto,*" Margin="16">
+            <!-- Header Section -->
+            <StackPanel Grid.Row="0" Margin="0,0,0,16">
+                <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,0,0,8">
+                    <TextBlock Text="📋 Pull Request Details" 
+                               FontSize="20" 
+                               FontWeight="SemiBold"/>
+                    <Border Background="{DynamicResource SystemControlBackgroundBaseMediumLowBrush}"
+                            Padding="6,3"
+                            CornerRadius="3"
+                            IsVisible="{Binding PullRequest.IsDraft}">
+                        <TextBlock Text="DRAFT" 
+                                   FontSize="11"
+                                   FontWeight="SemiBold"/>
+                    </Border>
+                </StackPanel>
+                
+                <!-- Loading Indicator -->
+                <ProgressBar IsIndeterminate="{Binding IsLoading}" 
+                             IsVisible="{Binding IsLoading}"
+                             Margin="0,8"/>
+            </StackPanel>
+
+            <!-- Pull Request Overview -->
+            <Border Grid.Row="1" 
+                    Background="{DynamicResource SystemControlBackgroundBaseLowBrush}"
+                    CornerRadius="6"
+                    Padding="16"
+                    Margin="0,0,0,16"
+                    IsVisible="{Binding !!PullRequest}">
+                <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto" ColumnDefinitions="*,Auto">
+                    
+                    <!-- Title and Number -->
+                    <StackPanel Grid.Row="0" Grid.ColumnSpan="2" Margin="0,0,0,12">
+                        <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,0,0,4">
+                            <TextBlock Text="{Binding PullRequest.Number, StringFormat='#{0}'}" 
+                                       FontSize="16"
+                                       FontWeight="SemiBold"
+                                       Foreground="{DynamicResource SystemBaseMediumColorBrush}"/>
+                            <TextBlock Text="{Binding PullRequest.Title}" 
+                                       FontSize="16"
+                                       FontWeight="SemiBold"
+                                       TextWrapping="Wrap"/>
+                            <Border Background="{Binding PullRequest.State, Converter={x:Static converters:StateToColorConverter.Instance}}"
+                                    Padding="6,3"
+                                    CornerRadius="3">
+                                <TextBlock Text="{Binding PullRequest.State}" 
+                                           Foreground="White"
+                                           FontSize="11"
+                                           FontWeight="SemiBold"/>
+                            </Border>
+                        </StackPanel>
+                    </StackPanel>
+
+                    <!-- Author and Branches -->
+                    <StackPanel Grid.Row="1" Grid.Column="0" Orientation="Horizontal" Spacing="16" Margin="0,0,0,12">
+                        <StackPanel Orientation="Horizontal" Spacing="4">
+                            <TextBlock Text="👤" FontSize="12"/>
+                            <TextBlock Text="{Binding PullRequest.Author.Login}" 
+                                       FontWeight="SemiBold"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Spacing="4">
+                            <TextBlock Text="🔀" FontSize="12"/>
+                            <TextBlock Text="{Binding PullRequest.HeadBranch}"/>
+                            <TextBlock Text="→"/>
+                            <TextBlock Text="{Binding PullRequest.BaseBranch}" FontWeight="SemiBold"/>
+                        </StackPanel>
+                    </StackPanel>
+
+                    <!-- Action Buttons -->
+                    <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                        <Button Content="🔄 Refresh" 
+                                Command="{Binding RefreshCommand}"
+                                IsEnabled="{Binding !IsLoading}"/>
+                        <Button Content="🌐 Open in Browser" 
+                                Command="{Binding OpenInBrowserCommand}"/>
+                        <Button Content="💬 Comments" 
+                                Command="{Binding ViewCommentsCommand}"/>
+                        <Button Content="📝 Reviews" 
+                                Command="{Binding ViewReviewsCommand}"/>
+                    </StackPanel>
+
+                    <!-- Description -->
+                    <ScrollViewer Grid.Row="2" Grid.ColumnSpan="2" 
+                                  MaxHeight="120" 
+                                  Margin="0,0,0,12"
+                                  IsVisible="{Binding !!PullRequest.Body}">
+                        <Border Background="{DynamicResource SystemControlBackgroundBaseMediumLowBrush}"
+                                Padding="8"
+                                CornerRadius="4">
+                            <TextBlock Text="{Binding PullRequest.Body}" 
+                                       TextWrapping="Wrap"/>
+                        </Border>
+                    </ScrollViewer>
+
+                    <!-- Metadata Row -->
+                    <Grid Grid.Row="3" Grid.ColumnSpan="2" ColumnDefinitions="*,*,*,*" Margin="0,0,0,12">
+                        <StackPanel Grid.Column="0" Spacing="4">
+                            <TextBlock Text="📅 Created" 
+                                       FontSize="11" 
+                                       Foreground="{DynamicResource SystemBaseMediumColorBrush}"/>
+                            <TextBlock Text="{Binding PullRequest.CreatedAt, StringFormat='{}{0:MMM dd, yyyy}'}" 
+                                       FontWeight="SemiBold"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Spacing="4">
+                            <TextBlock Text="🔄 Updated" 
+                                       FontSize="11" 
+                                       Foreground="{DynamicResource SystemBaseMediumColorBrush}"/>
+                            <TextBlock Text="{Binding PullRequest.UpdatedAt, StringFormat='{}{0:MMM dd, yyyy}'}" 
+                                       FontWeight="SemiBold"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="2" Spacing="4">
+                            <TextBlock Text="📦 Commits" 
+                                       FontSize="11" 
+                                       Foreground="{DynamicResource SystemBaseMediumColorBrush}"/>
+                            <TextBlock Text="{Binding PullRequest.Commits}" 
+                                       FontWeight="SemiBold"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="3" Spacing="4">
+                            <TextBlock Text="📁 Files" 
+                                       FontSize="11" 
+                                       Foreground="{DynamicResource SystemBaseMediumColorBrush}"/>
+                            <TextBlock Text="{Binding PullRequest.ChangedFiles}" 
+                                       FontWeight="SemiBold"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- Code Changes -->
+                    <StackPanel Grid.Row="4" Grid.ColumnSpan="2" Orientation="Horizontal" Spacing="16">
+                        <StackPanel Orientation="Horizontal" Spacing="4">
+                            <TextBlock Text="+" FontSize="14" Foreground="Green" FontWeight="Bold"/>
+                            <TextBlock Text="{Binding PullRequest.Additions}" 
+                                       Foreground="Green" 
+                                       FontWeight="SemiBold"/>
+                            <TextBlock Text="additions" 
+                                       Foreground="Green" 
+                                       FontSize="12"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Spacing="4">
+                            <TextBlock Text="-" FontSize="14" Foreground="Red" FontWeight="Bold"/>
+                            <TextBlock Text="{Binding PullRequest.Deletions}" 
+                                       Foreground="Red" 
+                                       FontWeight="SemiBold"/>
+                            <TextBlock Text="deletions" 
+                                       Foreground="Red" 
+                                       FontSize="12"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Spacing="4" 
+                                    IsVisible="{Binding PullRequest.Mergeable}">
+                            <TextBlock Text="✅" FontSize="12"/>
+                            <TextBlock Text="Mergeable" 
+                                       FontSize="12" 
+                                       Foreground="Green"/>
+                        </StackPanel>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- Tabbed Content Area -->
+            <Border Grid.Row="2" 
+                    Background="{DynamicResource SystemControlBackgroundBaseLowBrush}"
+                    CornerRadius="6"
+                    IsVisible="{Binding !!PullRequest}">
+                <Grid RowDefinitions="Auto,*">
+                    <!-- Tab Headers -->
+                    <Border Grid.Row="0" 
+                            Background="{DynamicResource SystemControlBackgroundBaseMediumLowBrush}"
+                            CornerRadius="6,6,0,0"
+                            Padding="12,8">
+                        <StackPanel Orientation="Horizontal" Spacing="16">
+                            <RadioButton Content="Overview" 
+                                         IsChecked="{Binding SelectedTab, Converter={x:Static converters:EqualityConverter.Instance}, ConverterParameter=Overview}"/>
+                            <RadioButton Content="{Binding Comments.Count, StringFormat='Comments ({0})'}" 
+                                         IsChecked="{Binding SelectedTab, Converter={x:Static converters:EqualityConverter.Instance}, ConverterParameter=Comments}"/>
+                            <RadioButton Content="{Binding Reviews.Count, StringFormat='Reviews ({0})'}" 
+                                         IsChecked="{Binding SelectedTab, Converter={x:Static converters:EqualityConverter.Instance}, ConverterParameter=Reviews}"/>
+                            <RadioButton Content="Files" 
+                                         IsChecked="{Binding SelectedTab, Converter={x:Static converters:EqualityConverter.Instance}, ConverterParameter=Files}"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Tab Content -->
+                    <ScrollViewer Grid.Row="1" Padding="16">
+                        <Grid>
+                            <!-- Overview Tab -->
+                            <StackPanel IsVisible="{Binding SelectedTab, Converter={x:Static converters:EqualityConverter.Instance}, ConverterParameter=Overview}">
+                                <TextBlock Text="📋 Pull Request Overview" 
+                                           FontSize="16" 
+                                           FontWeight="SemiBold" 
+                                           Margin="0,0,0,16"/>
+                                
+                                <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto,Auto" Margin="0,0,0,16">
+                                    <StackPanel Grid.Column="0" Grid.Row="0" Margin="0,0,16,8">
+                                        <TextBlock Text="Repository" 
+                                                   FontWeight="SemiBold" 
+                                                   Margin="0,0,0,4"/>
+                                        <TextBlock Text="{Binding PullRequest.Repository.FullName}"/>
+                                    </StackPanel>
+                                    
+                                    <StackPanel Grid.Column="1" Grid.Row="0" Margin="0,0,0,8">
+                                        <TextBlock Text="Status" 
+                                                   FontWeight="SemiBold" 
+                                                   Margin="0,0,0,4"/>
+                                        <TextBlock Text="{Binding PullRequest.State}"/>
+                                    </StackPanel>
+                                    
+                                    <StackPanel Grid.Column="0" Grid.Row="1" Margin="0,0,16,8">
+                                        <TextBlock Text="Base Branch" 
+                                                   FontWeight="SemiBold" 
+                                                   Margin="0,0,0,4"/>
+                                        <TextBlock Text="{Binding PullRequest.BaseBranch}"/>
+                                    </StackPanel>
+                                    
+                                    <StackPanel Grid.Column="1" Grid.Row="1" Margin="0,0,0,8">
+                                        <TextBlock Text="Head Branch" 
+                                                   FontWeight="SemiBold" 
+                                                   Margin="0,0,0,4"/>
+                                        <TextBlock Text="{Binding PullRequest.HeadBranch}"/>
+                                    </StackPanel>
+                                </Grid>
+
+                                <TextBlock Text="This tab provides a comprehensive overview of the pull request details. Switch to other tabs to view comments, reviews, or file changes."
+                                           Foreground="{DynamicResource SystemBaseMediumColorBrush}"
+                                           TextWrapping="Wrap"
+                                           FontStyle="Italic"/>
+                            </StackPanel>
+
+                            <!-- Comments Tab -->
+                            <StackPanel IsVisible="{Binding SelectedTab, Converter={x:Static converters:EqualityConverter.Instance}, ConverterParameter=Comments}">
+                                <TextBlock Text="💬 Comments" 
+                                           FontSize="16" 
+                                           FontWeight="SemiBold" 
+                                           Margin="0,0,0,16"/>
+                                
+                                <ItemsControl ItemsSource="{Binding Comments}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Background="{DynamicResource SystemControlBackgroundBaseMediumLowBrush}"
+                                                    CornerRadius="4"
+                                                    Padding="12"
+                                                    Margin="0,0,0,8">
+                                                <StackPanel>
+                                                    <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,0,0,8">
+                                                        <TextBlock Text="{Binding Author.Login}" 
+                                                                   FontWeight="SemiBold"/>
+                                                        <TextBlock Text="{Binding CreatedAt, StringFormat='{}{0:MMM dd, yyyy HH:mm}'}" 
+                                                                   FontSize="12" 
+                                                                   Foreground="{DynamicResource SystemBaseMediumColorBrush}"/>
+                                                        <Border Background="{DynamicResource SystemControlBackgroundBaseMediumBrush}"
+                                                                Padding="4,2"
+                                                                CornerRadius="2">
+                                                            <TextBlock Text="{Binding Type}" 
+                                                                       FontSize="10"/>
+                                                        </Border>
+                                                    </StackPanel>
+                                                    <TextBlock Text="{Binding Body}" 
+                                                               TextWrapping="Wrap"/>
+                                                </StackPanel>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                                
+                                <TextBlock Text="No comments available." 
+                                           IsVisible="{Binding !Comments.Count}"
+                                           Foreground="{DynamicResource SystemBaseMediumColorBrush}"
+                                           FontStyle="Italic"
+                                           HorizontalAlignment="Center"
+                                           Margin="0,32"/>
+                            </StackPanel>
+
+                            <!-- Reviews Tab -->
+                            <StackPanel IsVisible="{Binding SelectedTab, Converter={x:Static converters:EqualityConverter.Instance}, ConverterParameter=Reviews}">
+                                <TextBlock Text="📝 Reviews" 
+                                           FontSize="16" 
+                                           FontWeight="SemiBold" 
+                                           Margin="0,0,0,16"/>
+                                
+                                <ItemsControl ItemsSource="{Binding Reviews}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Background="{DynamicResource SystemControlBackgroundBaseMediumLowBrush}"
+                                                    CornerRadius="4"
+                                                    Padding="12"
+                                                    Margin="0,0,0,8">
+                                                <StackPanel>
+                                                    <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,0,0,8">
+                                                        <TextBlock Text="{Binding User.Login}" 
+                                                                   FontWeight="SemiBold"/>
+                                                        <TextBlock Text="{Binding SubmittedAt, StringFormat='{}{0:MMM dd, yyyy HH:mm}'}" 
+                                                                   FontSize="12" 
+                                                                   Foreground="{DynamicResource SystemBaseMediumColorBrush}"/>
+                                                        <Border Background="{Binding State, Converter={x:Static converters:ReviewStateToColorConverter.Instance}}"
+                                                                Padding="4,2"
+                                                                CornerRadius="2">
+                                                            <TextBlock Text="{Binding State}" 
+                                                                       FontSize="10"
+                                                                       Foreground="White"/>
+                                                        </Border>
+                                                    </StackPanel>
+                                                    <TextBlock Text="{Binding Body}" 
+                                                               TextWrapping="Wrap"
+                                                               IsVisible="{Binding !!Body}"/>
+                                                </StackPanel>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                                
+                                <TextBlock Text="No reviews available." 
+                                           IsVisible="{Binding !Reviews.Count}"
+                                           Foreground="{DynamicResource SystemBaseMediumColorBrush}"
+                                           FontStyle="Italic"
+                                           HorizontalAlignment="Center"
+                                           Margin="0,32"/>
+                            </StackPanel>
+
+                            <!-- Files Tab -->
+                            <StackPanel IsVisible="{Binding SelectedTab, Converter={x:Static converters:EqualityConverter.Instance}, ConverterParameter=Files}">
+                                <TextBlock Text="📁 File Changes" 
+                                           FontSize="16" 
+                                           FontWeight="SemiBold" 
+                                           Margin="0,0,0,16"/>
+                                
+                                <TextBlock Text="File changes view will be implemented in a future update. For now, you can view file changes by clicking 'Open in Browser'."
+                                           Foreground="{DynamicResource SystemBaseMediumColorBrush}"
+                                           TextWrapping="Wrap"
+                                           FontStyle="Italic"
+                                           HorizontalAlignment="Center"
+                                           Margin="0,32"/>
+                            </StackPanel>
+                        </Grid>
+                    </ScrollViewer>
+                </Grid>
+            </Border>
+
+            <!-- Empty State -->
+            <StackPanel Grid.Row="2" 
+                        HorizontalAlignment="Center" 
+                        VerticalAlignment="Center"
+                        IsVisible="{Binding !PullRequest}">
+                <TextBlock Text="📋" 
+                           FontSize="48" 
+                           HorizontalAlignment="Center" 
+                           Margin="0,0,0,16"/>
+                <TextBlock Text="Select a Pull Request" 
+                           FontSize="18" 
+                           FontWeight="SemiBold" 
+                           HorizontalAlignment="Center" 
+                           Margin="0,0,0,8"/>
+                <TextBlock Text="Choose a pull request from the list to view detailed information, comments, and reviews." 
+                           Foreground="{DynamicResource SystemBaseMediumColorBrush}"
+                           HorizontalAlignment="Center"
+                           TextAlignment="Center"
+                           TextWrapping="Wrap"
+                           MaxWidth="400"/>
+            </StackPanel>
+        </Grid>
+    </ScrollViewer>
+</UserControl>
