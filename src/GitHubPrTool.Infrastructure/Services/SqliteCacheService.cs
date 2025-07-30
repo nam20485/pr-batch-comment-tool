@@ -193,6 +193,22 @@ public class SqliteCacheService : ICacheService
     {
         try
         {
+            // Skip cache table creation for in-memory databases as they don't support raw SQL
+            // or handle SQLite memory databases specially
+            if (_context.Database.IsInMemory())
+            {
+                _logger.LogDebug("Skipping cache table creation for in-memory database");
+                return;
+            }
+
+            // Check if this is a SQLite memory database by looking at connection string
+            var connectionString = _context.Database.GetConnectionString();
+            if (connectionString != null && connectionString.Contains(":memory:"))
+            {
+                _logger.LogDebug("Skipping cache table creation for SQLite memory database");
+                return;
+            }
+
             _context.Database.ExecuteSqlRaw(@"
                 CREATE TABLE IF NOT EXISTS CacheEntries (
                     Key TEXT PRIMARY KEY,
