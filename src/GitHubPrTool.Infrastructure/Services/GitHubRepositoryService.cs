@@ -383,12 +383,37 @@ public class GitHubRepositoryService : IGitHubRepository
         }
     }
 
-    private async Task<Core.Models.Repository?> GetRepositoryByIdAsync(long repositoryId, CancellationToken cancellationToken)
+    public async Task<Core.Models.Repository?> GetRepositoryByIdAsync(long repositoryId, CancellationToken cancellationToken = default)
     {
-        // This is a simplified implementation. In a real app, you'd maintain a mapping
-        // or store repository info in your database
-        var cacheKey = $"repo_by_id_{repositoryId}";
-        return await _cacheService.GetAsync<Core.Models.Repository>(cacheKey, cancellationToken);
+        try
+        {
+            _logger.LogDebug("Getting repository by ID {Id}", repositoryId);
+            
+            // Try cache first
+            var cached = await _cacheService.GetAsync<Core.Models.Repository>($"repository_{repositoryId}", cancellationToken);
+            if (cached != null)
+            {
+                _logger.LogDebug("Retrieved repository {Name} from cache", cached.Name);
+                return cached;
+            }
+
+            // If not in cache, try to find in repositories list
+            var repositories = await GetRepositoriesAsync(cancellationToken);
+            var repository = repositories.FirstOrDefault(r => r.Id == repositoryId);
+            
+            if (repository != null)
+            {
+                // Cache individual repository
+                await _cacheService.SetAsync($"repository_{repositoryId}", repository, TimeSpan.FromHours(1), cancellationToken);
+            }
+            
+            return repository;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting repository by ID {Id}", repositoryId);
+            throw;
+        }
     }
 
     private static Core.Models.Repository MapToRepository(Octokit.Repository octokitRepo)
@@ -464,5 +489,150 @@ public class GitHubRepositoryService : IGitHubRepository
                 HtmlUrl = octokitPr.MergedBy.HtmlUrl
             } : null
         };
+    }
+
+    public async Task AddRepositoryAsync(Core.Models.Repository repository, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(repository);
+
+        try
+        {
+            _logger.LogDebug("Adding/updating repository {Name} to cache", repository.Name);
+            
+            // Store in cache with a reasonable expiration
+            await _cacheService.SetAsync($"repository_{repository.Id}", repository, TimeSpan.FromHours(1), cancellationToken);
+            
+            // Also update the repositories list cache
+            const string cacheKey = "user_repositories";
+            var repositories = await _cacheService.GetAsync<List<Core.Models.Repository>>(cacheKey, cancellationToken) ?? new List<Core.Models.Repository>();
+            
+            // Remove existing entry if present
+            repositories.RemoveAll(r => r.Id == repository.Id);
+            
+            // Add updated repository
+            repositories.Add(repository);
+            
+            // Update cache
+            await _cacheService.SetAsync(cacheKey, repositories, TimeSpan.FromMinutes(30), cancellationToken);
+            
+            _logger.LogDebug("Repository {Name} added/updated in cache", repository.Name);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error adding repository {Name} to cache", repository.Name);
+            throw;
+        }
+    }
+
+    public async Task AddPullRequestAsync(Core.Models.PullRequest pullRequest, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(pullRequest);
+
+        try
+        {
+            _logger.LogDebug("Adding/updating pull request #{Number} to cache", pullRequest.Number);
+            
+            // Store individual PR in cache
+            await _cacheService.SetAsync($"pullrequest_{pullRequest.RepositoryId}_{pullRequest.Number}", pullRequest, TimeSpan.FromHours(1), cancellationToken);
+            
+            // Update the PR list cache for the repository
+            var cacheKey = $"pullrequests_{pullRequest.RepositoryId}";
+            var pullRequests = await _cacheService.GetAsync<List<Core.Models.PullRequest>>(cacheKey, cancellationToken) ?? new List<Core.Models.PullRequest>();
+            
+            // Remove existing entry if present
+            pullRequests.RemoveAll(pr => pr.Id == pullRequest.Id);
+            
+            // Add updated pull request
+            pullRequests.Add(pullRequest);
+            
+            // Sort by updated date descending
+            pullRequests = pullRequests.OrderByDescending(pr => pr.UpdatedAt).ToList();
+            
+            // Update cache
+            await _cacheService.SetAsync(cacheKey, pullRequests, TimeSpan.FromMinutes(30), cancellationToken);
+            
+            _logger.LogDebug("Pull request #{Number} added/updated in cache", pullRequest.Number);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error adding pull request #{Number} to cache", pullRequest.Number);
+            throw;
+        }
+    }
+
+    public async Task AddCommentAsync(Core.Models.Comment comment, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(comment);
+
+        try
+        {
+            _logger.LogDebug("Adding/updating comment {Id} to cache", comment.Id);
+            
+            // Store individual comment in cache
+            await _cacheService.SetAsync($"comment_{comment.Id}", comment, TimeSpan.FromHours(1), cancellationToken);
+            
+            // For now, we'll skip updating the comments list cache since we don't have direct repository/PR access
+            // This can be enhanced later when we need to efficiently retrieve comments by PR
+            
+            _logger.LogDebug("Comment {Id} added/updated in cache", comment.Id);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error adding comment {Id} to cache", comment.Id);
+            throw;
+        }
+    }
+
+    public async Task UpdateLastSyncAsync(string operation, DateTimeOffset timestamp, CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(operation);
+
+        try
+        {
+            _logger.LogDebug("Updating last sync timestamp for operation {Operation}", operation);
+            
+            var cacheKey = $"last_sync_{operation}";
+            // Store as string to avoid generic constraint issues
+            await _cacheService.SetAsync(cacheKey, timestamp.ToString("O"), TimeSpan.FromDays(7), cancellationToken);
+            
+            _logger.LogDebug("Last sync timestamp updated for operation {Operation}: {Timestamp}", operation, timestamp);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating last sync timestamp for operation {Operation}", operation);
+            throw;
+        }
+    }
+
+    public async Task<DateTimeOffset?> GetLastSyncAsync(string operation, CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(operation);
+
+        try
+        {
+            var cacheKey = $"last_sync_{operation}";
+            // Retrieve as string and parse
+            var timestampString = await _cacheService.GetAsync<string>(cacheKey, cancellationToken);
+            
+            if (string.IsNullOrEmpty(timestampString))
+            {
+                _logger.LogDebug("No last sync timestamp for operation {Operation}", operation);
+                return null;
+            }
+
+            if (DateTimeOffset.TryParse(timestampString, out var timestamp))
+            {
+                _logger.LogDebug("Last sync timestamp for operation {Operation}: {Timestamp}", operation, timestamp);
+                return timestamp;
+            }
+
+            _logger.LogWarning("Failed to parse timestamp {TimestampString} for operation {Operation}", timestampString, operation);
+            return null;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting last sync timestamp for operation {Operation}", operation);
+            return null;
+        }
     }
 }

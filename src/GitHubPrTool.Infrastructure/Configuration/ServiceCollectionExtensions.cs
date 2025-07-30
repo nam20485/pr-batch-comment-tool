@@ -64,6 +64,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<ICacheService, SqliteCacheService>();
         services.AddScoped<ITokenStorage, SecureTokenStorage>();
         services.AddScoped<IGitHubRepository, GitHubRepositoryService>();
+        services.AddScoped<IDataSyncService, DataSyncService>();
         services.AddScoped<IAuthService, GitHubAuthService>();
 
         // Add HTTP client for external API calls
@@ -117,6 +118,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<ICacheService, SqliteCacheService>();
         services.AddScoped<ITokenStorage, SecureTokenStorage>();
         services.AddScoped<IGitHubRepository, GitHubRepositoryService>();
+        services.AddScoped<IDataSyncService, DataSyncService>();
         services.AddScoped<IAuthService, GitHubAuthService>();
 
         // Add HTTP client for external API calls
