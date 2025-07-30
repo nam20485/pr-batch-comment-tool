@@ -2,6 +2,7 @@ using GitHubPrTool.Core.Interfaces;
 using GitHubPrTool.Core.Services;
 using GitHubPrTool.Infrastructure.Data;
 using GitHubPrTool.Infrastructure.Services;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -44,6 +45,11 @@ public static class ServiceCollectionExtensions
             }
         });
 
+        // Add Data Protection for secure token storage
+        services.AddDataProtection()
+            .SetApplicationName("GitHubPrTool")
+            .PersistKeysToFileSystem(new DirectoryInfo(GetDataProtectionKeysPath()));
+
         // Add Octokit GitHub client
         services.AddSingleton<IGitHubClient>(provider =>
         {
@@ -56,7 +62,9 @@ public static class ServiceCollectionExtensions
 
         // Add infrastructure services
         services.AddScoped<ICacheService, SqliteCacheService>();
+        services.AddScoped<ITokenStorage, SecureTokenStorage>();
         services.AddScoped<IGitHubRepository, GitHubRepositoryService>();
+        services.AddScoped<IDataSyncService, DataSyncService>();
         services.AddScoped<IAuthService, GitHubAuthService>();
 
         // Add HTTP client for external API calls
@@ -91,6 +99,11 @@ public static class ServiceCollectionExtensions
             options.EnableDetailedErrors();
         });
 
+        // Add Data Protection for secure token storage (in-memory for tests)
+        services.AddDataProtection()
+            .SetApplicationName("GitHubPrTool")
+            .DisableAutomaticKeyGeneration();
+
         // Add Octokit GitHub client
         services.AddSingleton<IGitHubClient>(provider =>
         {
@@ -103,7 +116,9 @@ public static class ServiceCollectionExtensions
 
         // Add infrastructure services
         services.AddScoped<ICacheService, SqliteCacheService>();
+        services.AddScoped<ITokenStorage, SecureTokenStorage>();
         services.AddScoped<IGitHubRepository, GitHubRepositoryService>();
+        services.AddScoped<IDataSyncService, DataSyncService>();
         services.AddScoped<IAuthService, GitHubAuthService>();
 
         // Add HTTP client for external API calls
@@ -140,6 +155,24 @@ public static class ServiceCollectionExtensions
         }
 
         return $"Data Source={dbPath}";
+    }
+
+    /// <summary>
+    /// Gets the path for storing Data Protection keys.
+    /// </summary>
+    /// <returns>The data protection keys path.</returns>
+    private static string GetDataProtectionKeysPath()
+    {
+        var appDataPath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+        var keysPath = Path.Combine(appDataPath, "GitHubPrTool", "DataProtectionKeys");
+        
+        // Ensure directory exists
+        if (!Directory.Exists(keysPath))
+        {
+            Directory.CreateDirectory(keysPath);
+        }
+
+        return keysPath;
     }
 
     /// <summary>

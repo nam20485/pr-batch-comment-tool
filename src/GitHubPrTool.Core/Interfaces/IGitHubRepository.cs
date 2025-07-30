@@ -85,4 +85,49 @@ public interface IGitHubRepository
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Created review with duplicated comments</returns>
     Task<Review> DuplicateCommentsAsync(IEnumerable<Comment> sourceComments, long targetPullRequestId, string reviewBody, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Add or update a repository in the local cache
+    /// </summary>
+    /// <param name="repository">Repository to add/update</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    Task AddRepositoryAsync(Repository repository, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Get a repository by ID
+    /// </summary>
+    /// <param name="id">Repository ID</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>Repository if found, null otherwise</returns>
+    Task<Repository?> GetRepositoryByIdAsync(long id, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Add or update a pull request in the local cache
+    /// </summary>
+    /// <param name="pullRequest">Pull request to add/update</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    Task AddPullRequestAsync(PullRequest pullRequest, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Add or update a comment in the local cache
+    /// </summary>
+    /// <param name="comment">Comment to add/update</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    Task AddCommentAsync(Comment comment, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Update the last sync timestamp for an operation
+    /// </summary>
+    /// <param name="operation">Operation name</param>
+    /// <param name="timestamp">Sync timestamp</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    Task UpdateLastSyncAsync(string operation, DateTimeOffset timestamp, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Get the last sync timestamp for an operation
+    /// </summary>
+    /// <param name="operation">Operation name</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>Last sync timestamp if available</returns>
+    Task<DateTimeOffset?> GetLastSyncAsync(string operation, CancellationToken cancellationToken = default);
 }

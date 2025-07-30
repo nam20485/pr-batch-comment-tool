@@ -2,9 +2,6 @@ using GitHubPrTool.Core.Interfaces;
 using GitHubPrTool.Core.Models;
 using Microsoft.Extensions.Logging;
 using Octokit;
-using System.Security.Cryptography;
-using System.Text;
-using System.Text.Json;
 
 namespace GitHubPrTool.Infrastructure.Services;
 
@@ -15,6 +12,7 @@ public class GitHubAuthService : IAuthService
 {
     private readonly IGitHubClient _gitHubClient;
     private readonly ICacheService _cacheService;
+    private readonly ITokenStorage _tokenStorage;
     private readonly ILogger<GitHubAuthService> _logger;
     private readonly string _clientId;
     private readonly string _clientSecret;
@@ -31,12 +29,14 @@ public class GitHubAuthService : IAuthService
     public GitHubAuthService(
         IGitHubClient gitHubClient,
         ICacheService cacheService,
+        ITokenStorage tokenStorage,
         ILogger<GitHubAuthService> logger,
         string clientId,
         string clientSecret)
     {
         _gitHubClient = gitHubClient ?? throw new ArgumentNullException(nameof(gitHubClient));
         _cacheService = cacheService ?? throw new ArgumentNullException(nameof(cacheService));
+        _tokenStorage = tokenStorage ?? throw new ArgumentNullException(nameof(tokenStorage));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _clientId = clientId ?? throw new ArgumentNullException(nameof(clientId));
         _clientSecret = clientSecret ?? throw new ArgumentNullException(nameof(clientSecret));
@@ -120,7 +120,7 @@ public class GitHubAuthService : IAuthService
             _gitHubClient.Connection.Credentials = Credentials.Anonymous;
 
             // Clear stored authentication data
-            await _cacheService.RemoveAsync("github_access_token", cancellationToken);
+            await _tokenStorage.RemoveTokenAsync("github_access_token", cancellationToken);
             await _cacheService.RemoveAsync("github_current_user", cancellationToken);
 
             AuthenticationChanged?.Invoke(this, false);
@@ -175,18 +175,10 @@ public class GitHubAuthService : IAuthService
         {
             _logger.LogInformation("Loading saved authentication state");
 
-            var encryptedToken = await _cacheService.GetAsync<string>("github_access_token", cancellationToken);
-            if (string.IsNullOrEmpty(encryptedToken))
-            {
-                _logger.LogDebug("No saved access token found");
-                return false;
-            }
-
-            var accessToken = DecryptToken(encryptedToken);
+            var accessToken = await _tokenStorage.RetrieveTokenAsync("github_access_token", cancellationToken);
             if (string.IsNullOrEmpty(accessToken))
             {
-                _logger.LogWarning("Failed to decrypt saved access token");
-                await _cacheService.RemoveAsync("github_access_token", cancellationToken);
+                _logger.LogDebug("No saved access token found");
                 return false;
             }
 
@@ -217,9 +209,8 @@ public class GitHubAuthService : IAuthService
         var octokitUser = await _gitHubClient.User.Current();
         _currentUser = MapToUser(octokitUser);
 
-        // Store encrypted token and user information
-        var encryptedToken = EncryptToken(accessToken);
-        await _cacheService.SetAsync("github_access_token", encryptedToken, TimeSpan.FromDays(30), cancellationToken);
+        // Store encrypted token and user information using secure storage
+        await _tokenStorage.StoreTokenAsync("github_access_token", accessToken, cancellationToken);
         await _cacheService.SetAsync("github_current_user", _currentUser, TimeSpan.FromDays(1), cancellationToken);
 
         AuthenticationChanged?.Invoke(this, true);
@@ -239,38 +230,5 @@ public class GitHubAuthService : IAuthService
             CreatedAt = octokitUser.CreatedAt,
             UpdatedAt = octokitUser.UpdatedAt
         };
-    }
-
-    private string EncryptToken(string token)
-    {
-        try
-        {
-            // Simple encryption using Data Protection API (Windows) or basic encryption for cross-platform
-            var data = Encoding.UTF8.GetBytes(token);
-            var entropy = Encoding.UTF8.GetBytes("GitHubPrTool"); // Additional entropy
-            
-            // For simplicity, using base64 encoding. In production, use proper encryption
-            return Convert.ToBase64String(data);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error encrypting token");
-            throw;
-        }
-    }
-
-    private string DecryptToken(string encryptedToken)
-    {
-        try
-        {
-            // Corresponding decryption for the simple encryption above
-            var data = Convert.FromBase64String(encryptedToken);
-            return Encoding.UTF8.GetString(data);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error decrypting token");
-            return string.Empty;
-        }
     }
 }
