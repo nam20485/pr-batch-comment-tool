@@ -5,6 +5,7 @@ using CommunityToolkit.Mvvm.Input;
 using GitHubPrTool.Core.Interfaces;
 using GitHubPrTool.Core.Models;
 using Microsoft.Extensions.Logging;
+using Avalonia.Threading; // <-- Added for UI thread dispatching
 
 namespace GitHubPrTool.Desktop.ViewModels;
 
@@ -346,18 +347,23 @@ public partial class CommentExportImportViewModel : ObservableObject
         try
         {
             var repositories = await _repository.GetRepositoriesAsync();
-            
-            AvailableRepositories.Clear();
-            foreach (var repo in repositories)
-            {
-                AvailableRepositories.Add(repo);
-            }
 
-            StatusMessage = $"Loaded {AvailableRepositories.Count} repositories";
+            await Dispatcher.UIThread.InvokeAsync(() =>
+            {
+                AvailableRepositories.Clear();
+                foreach (var repo in repositories)
+                {
+                    AvailableRepositories.Add(repo);
+                }
+                StatusMessage = $"Loaded {AvailableRepositories.Count} repositories";
+            });
         }
         catch (Exception ex)
         {
-            StatusMessage = $"Error loading repositories: {ex.Message}";
+            await Dispatcher.UIThread.InvokeAsync(() =>
+            {
+                StatusMessage = $"Error loading repositories: {ex.Message}";
+            });
             _logger.LogError(ex, "Error loading repositories");
         }
     }
@@ -369,25 +375,33 @@ public partial class CommentExportImportViewModel : ObservableObject
     {
         if (SelectedRepositoryId == 0)
         {
-            AvailablePullRequests.Clear();
+            await Dispatcher.UIThread.InvokeAsync(() =>
+            {
+                AvailablePullRequests.Clear();
+            });
             return;
         }
 
         try
         {
             var pullRequests = await _repository.GetPullRequestsAsync(SelectedRepositoryId);
-            
-            AvailablePullRequests.Clear();
-            foreach (var pr in pullRequests)
-            {
-                AvailablePullRequests.Add(pr);
-            }
 
-            StatusMessage = $"Loaded {AvailablePullRequests.Count} pull requests";
+            await Dispatcher.UIThread.InvokeAsync(() =>
+            {
+                AvailablePullRequests.Clear();
+                foreach (var pr in pullRequests)
+                {
+                    AvailablePullRequests.Add(pr);
+                }
+                StatusMessage = $"Loaded {AvailablePullRequests.Count} pull requests";
+            });
         }
         catch (Exception ex)
         {
-            StatusMessage = $"Error loading pull requests: {ex.Message}";
+            await Dispatcher.UIThread.InvokeAsync(() =>
+            {
+                StatusMessage = $"Error loading pull requests: {ex.Message}";
+            });
             _logger.LogError(ex, "Error loading pull requests");
         }
     }
@@ -399,25 +413,33 @@ public partial class CommentExportImportViewModel : ObservableObject
     {
         if (SelectedPullRequestId == 0)
         {
-            AvailableComments.Clear();
+            await Dispatcher.UIThread.InvokeAsync(() =>
+            {
+                AvailableComments.Clear();
+            });
             return;
         }
 
         try
         {
             var comments = await _repository.GetCommentsAsync(SelectedPullRequestId);
-            
-            AvailableComments.Clear();
-            foreach (var comment in comments)
-            {
-                AvailableComments.Add(comment);
-            }
 
-            StatusMessage = $"Loaded {AvailableComments.Count} comments";
+            await Dispatcher.UIThread.InvokeAsync(() =>
+            {
+                AvailableComments.Clear();
+                foreach (var comment in comments)
+                {
+                    AvailableComments.Add(comment);
+                }
+                StatusMessage = $"Loaded {AvailableComments.Count} comments";
+            });
         }
         catch (Exception ex)
         {
-            StatusMessage = $"Error loading comments: {ex.Message}";
+            await Dispatcher.UIThread.InvokeAsync(() =>
+            {
+                StatusMessage = $"Error loading comments: {ex.Message}";
+            });
             _logger.LogError(ex, "Error loading comments");
         }
     }

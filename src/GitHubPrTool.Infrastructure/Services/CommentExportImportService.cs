@@ -190,35 +190,44 @@ public class CommentExportImportService : ICommentExportImportService
         {
             _logger.LogInformation("Importing comments from CSV data");
 
-            var lines = csvData.Split('\n', StringSplitOptions.RemoveEmptyEntries);
-            if (lines.Length < 2)
+            using var reader = new StringReader(csvData);
+            var headerLine = await reader.ReadLineAsync(cancellationToken);
+
+            if (string.IsNullOrEmpty(headerLine))
             {
                 return new ImportResult
                 {
                     ValidationResult = new ValidationResult
                     {
                         IsValid = false,
-                        Errors = { "CSV data must contain at least a header and one data row" }
+                        Errors = { "CSV data must contain at least a header row." }
                     },
-                    Messages = { "Invalid CSV format" }
+                    Messages = { "Invalid CSV format: Missing header." }
                 };
             }
 
-            var headers = ParseCsvLine(lines[0]);
+            var headers = ParseCsvLine(headerLine);
             var comments = new List<Comment>();
             var errors = new List<string>();
+            var lineNumber = 1;
 
-            for (int i = 1; i < lines.Length; i++)
+            while (reader.Peek() != -1)
             {
+                lineNumber++;
                 try
                 {
-                    var values = ParseCsvLine(lines[i]);
-                    var comment = ParseCsvComment(headers, values);
-                    comments.Add(comment);
+                    var values = await ParseCsvRecordAsync(reader, cancellationToken);
+                    if (values.Any())
+                    {
+                        var comment = ParseCsvComment(headers, values);
+                        comments.Add(comment);
+                    }
                 }
                 catch (Exception ex)
                 {
-                    errors.Add($"Error parsing line {i + 1}: {ex.Message}");
+                    errors.Add($"Error parsing record near line {lineNumber}: {ex.Message}");
+                    // Skip to the next line to attempt recovery
+                    await reader.ReadLineAsync(cancellationToken);
                 }
             }
 
@@ -322,8 +331,21 @@ public class CommentExportImportService : ICommentExportImportService
             if (string.IsNullOrWhiteSpace(comment.Body))
                 result.Errors.Add($"Comment {comment.Id} has empty body");
 
-            if (comment.Author?.Id <= 0)
-                result.Errors.Add($"Comment {comment.Id} has invalid author");
+            // Validate author - check ID if available, otherwise check Login
+            if (comment.Author == null)
+            {
+                result.Errors.Add($"Comment {comment.Id} has no author");
+            }
+            else if (comment.Author.Id > 0)
+            {
+                // If ID is set, it should be valid (this handles JSON imports with full user data)
+                // No additional validation needed as ID > 0 is already valid
+            }
+            else if (string.IsNullOrWhiteSpace(comment.Author.Login))
+            {
+                // If ID is not set or is 0, Login must be present (this handles CSV imports)
+                result.Errors.Add($"Comment {comment.Id} has invalid author - both ID and Login are missing");
+            }
 
             if (comment.CreatedAt == default)
                 result.Errors.Add($"Comment {comment.Id} has invalid creation date");
@@ -371,6 +393,33 @@ public class CommentExportImportService : ICommentExportImportService
         }
 
         return value;
+    }
+
+    private static async Task<List<string>> ParseCsvRecordAsync(StringReader reader, CancellationToken cancellationToken)
+    {
+        var line = await reader.ReadLineAsync(cancellationToken);
+        if (line == null)
+        {
+            return new List<string>();
+        }
+
+        var builder = new StringBuilder(line);
+        
+        // If the line is part of a multi-line field, it will have an odd number of quotes.
+        // Keep reading lines until the quote count is even.
+        while (builder.ToString().Count(c => c == '"') % 2 != 0)
+        {
+            var nextLine = await reader.ReadLineAsync(cancellationToken);
+            if (nextLine == null)
+            {
+                // Reached end of stream inside a quoted field, which is a format error.
+                // Return what we have, and let the parser logic handle the malformed line.
+                break;
+            }
+            builder.Append('\n').Append(nextLine);
+        }
+
+        return ParseCsvLine(builder.ToString());
     }
 
     private static List<string> ParseCsvLine(string line)

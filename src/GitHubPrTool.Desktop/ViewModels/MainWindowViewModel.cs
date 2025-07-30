@@ -11,12 +11,14 @@ namespace GitHubPrTool.Desktop.ViewModels;
 /// ViewModel for the main window of the GitHub PR Review Assistant.
 /// Handles navigation, authentication status, and main application state.
 /// </summary>
-public partial class MainWindowViewModel : ObservableObject
+public partial class MainWindowViewModel : ObservableObject, IDisposable
 {
     private readonly IAuthService _authService;
     private readonly IDataSyncService _dataSyncService;
     private readonly INetworkConnectivityService _networkConnectivityService;
     private readonly ILogger<MainWindowViewModel> _logger;
+
+    private bool _disposed;
 
     [ObservableProperty]
     private string _statusMessage = "Ready";
@@ -124,14 +126,23 @@ public partial class MainWindowViewModel : ObservableObject
         // Wire up network connectivity events
         _networkConnectivityService.ConnectivityChanged += OnConnectivityChanged;
         
+        // Asynchronously initialize the view model state
+        _ = InitializeAsync();
+    }
+
+    /// <summary>
+    /// Asynchronously initializes the view model.
+    /// </summary>
+    private async Task InitializeAsync()
+    {
         // Initialize authentication status
-        UpdateAuthenticationStatus();
+        await UpdateAuthenticationStatusAsync();
         
         // Initialize connectivity monitoring
         _networkConnectivityService.StartMonitoring();
         
         // Initial connectivity check
-        _ = Task.Run(async () => await _networkConnectivityService.CheckConnectivityAsync());
+        await _networkConnectivityService.CheckConnectivityAsync();
     }
 
     /// <summary>
@@ -155,7 +166,7 @@ public partial class MainWindowViewModel : ObservableObject
             if (success)
             {
                 StatusMessage = "Successfully authenticated with GitHub!";
-                UpdateAuthenticationStatus();
+                await UpdateAuthenticationStatusAsync();
                 _logger.LogInformation("GitHub authentication successful");
             }
             else
@@ -284,8 +295,7 @@ public partial class MainWindowViewModel : ObservableObject
     {
         _logger.LogInformation("Application exit requested");
         
-        // Clean up network monitoring
-        _networkConnectivityService.StopMonitoring();
+        Dispose();
         
         System.Environment.Exit(0);
     }
@@ -385,7 +395,7 @@ public partial class MainWindowViewModel : ObservableObject
     /// <summary>
     /// Updates the authentication status and related properties.
     /// </summary>
-    private async void UpdateAuthenticationStatus()
+    private async Task UpdateAuthenticationStatusAsync()
     {
         try
         {
@@ -408,6 +418,9 @@ public partial class MainWindowViewModel : ObservableObject
                 {
                     ConnectionStatus = IsOnline ? "Limited" : "Offline";
                 }
+                
+                // Navigate to repositories view on successful authentication
+                NavigateToRepositories();
             }
             else
             {
@@ -424,5 +437,36 @@ public partial class MainWindowViewModel : ObservableObject
             ConnectionStatus = "Error";
             StatusMessage = "Authentication check failed";
         }
+    }
+
+    /// <summary>
+    /// Releases the unmanaged resources used by the MainWindowViewModel and optionally releases the managed resources.
+    /// </summary>
+    public void Dispose()
+    {
+        Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+
+    /// <summary>
+    /// Releases the unmanaged resources used by the MainWindowViewModel and optionally releases the managed resources.
+    /// </summary>
+    /// <param name="disposing">true to release both managed and unmanaged resources; false to release only unmanaged resources.</param>
+    protected virtual void Dispose(bool disposing)
+    {
+        if (_disposed)
+        {
+            return;
+        }
+
+        if (disposing)
+        {
+            // Dispose managed state (managed objects).
+            _networkConnectivityService.ConnectivityChanged -= OnConnectivityChanged;
+            _dataSyncService.SyncProgressChanged -= OnSyncProgressChanged;
+            _networkConnectivityService.StopMonitoring();
+        }
+
+        _disposed = true;
     }
 }

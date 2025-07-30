@@ -11,6 +11,7 @@ public class NetworkConnectivityService : INetworkConnectivityService, IDisposab
 {
     private readonly ILogger<NetworkConnectivityService> _logger;
     private readonly HttpClient _httpClient;
+    private Timer? _monitoringTimer;
     private bool _isConnected;
     private bool _isGitHubReachable;
     private bool _isMonitoring;
@@ -137,10 +138,15 @@ public class NetworkConnectivityService : INetworkConnectivityService, IDisposab
             return;
 
         _isMonitoring = true;
-        _logger.LogInformation("Starting network connectivity monitoring");
+        _logger.LogInformation("Starting network connectivity monitoring with {IntervalMs}ms interval", MonitoringIntervalMs);
 
-        // Start monitoring timer is not needed since we're using a different pattern
-        // The monitoring is handled by periodic checks triggered by the UI or other services
+        // Start the monitoring timer
+        _monitoringTimer = new Timer(
+            callback: async _ => await PerformMonitoringCheckAsync(),
+            state: null,
+            dueTime: TimeSpan.FromMilliseconds(MonitoringIntervalMs),
+            period: TimeSpan.FromMilliseconds(MonitoringIntervalMs)
+        );
     }
 
     public void StopMonitoring()
@@ -150,6 +156,25 @@ public class NetworkConnectivityService : INetworkConnectivityService, IDisposab
 
         _isMonitoring = false;
         _logger.LogInformation("Stopping network connectivity monitoring");
+
+        // Stop and dispose the timer
+        _monitoringTimer?.Dispose();
+        _monitoringTimer = null;
+    }
+
+    /// <summary>
+    /// Performs a connectivity check as part of the monitoring process
+    /// </summary>
+    private async Task PerformMonitoringCheckAsync()
+    {
+        try
+        {
+            await CheckConnectivityAsync();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error during monitoring connectivity check");
+        }
     }
 
     public void Dispose()
