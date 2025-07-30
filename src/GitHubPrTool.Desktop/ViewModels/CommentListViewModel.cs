@@ -362,6 +362,26 @@ public partial class CommentListViewModel : ObservableObject
     }
 
     /// <summary>
+    /// Command to toggle selection state of a comment.
+    /// </summary>
+    /// <param name="comment">Comment to toggle selection for.</param>
+    [RelayCommand]
+    private void ToggleCommentSelectionCommand(Comment comment)
+    {
+        ToggleCommentSelection(comment);
+    }
+
+    /// <summary>
+    /// Checks if a comment is currently selected.
+    /// </summary>
+    /// <param name="comment">Comment to check.</param>
+    /// <returns>True if the comment is selected.</returns>
+    public bool IsCommentSelected(Comment comment)
+    {
+        return SelectedComments.Contains(comment);
+    }
+
+    /// <summary>
     /// Command to duplicate selected comments (placeholder for batch operations).
     /// </summary>
     [RelayCommand]
@@ -380,11 +400,14 @@ public partial class CommentListViewModel : ObservableObject
         {
             var duplicatedComment = new Comment
             {
-                Id = Guid.NewGuid().ToString(), // Generate a unique ID for the duplicated comment
+                Id = Random.Shared.NextInt64(1000000, 9999999), // Generate a unique ID for the duplicated comment
                 Author = comment.Author,
-                Content = comment.Content,
-                CreatedAt = DateTime.Now,
-                UpdatedAt = DateTime.Now
+                Body = comment.Body,
+                Type = comment.Type,
+                PullRequest = comment.PullRequest,
+                PullRequestId = comment.PullRequestId,
+                CreatedAt = DateTimeOffset.Now,
+                UpdatedAt = DateTimeOffset.Now
             };
             Comments.Add(duplicatedComment);
         }

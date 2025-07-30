@@ -125,7 +125,10 @@
                                     <Grid ColumnDefinitions="Auto,*,Auto">
                                         <!-- Selection Checkbox -->
                                         <CheckBox Grid.Column="0"
-                                                  IsVisible="{Binding IsCheckboxVisible}"
+                                                  IsVisible="{Binding $parent[UserControl].((vm:CommentListViewModel)DataContext).ShowSelection}"
+                                                  IsChecked="{Binding $parent[UserControl].((vm:CommentListViewModel)DataContext).SelectedComments, Converter={x:Static converters:CommentSelectionConverter.Instance}, ConverterParameter={Binding}}"
+                                                  Command="{Binding $parent[UserControl].((vm:CommentListViewModel)DataContext).ToggleCommentSelectionCommandCommand}"
+                                                  CommandParameter="{Binding}"
                                                   Margin="0,0,12,0"
                                                   VerticalAlignment="Top"/>
                                         

@@ -205,4 +205,79 @@ public class CommentListViewModelTests
         _viewModel.AvailableAuthors.Should().Contain("All");
         _viewModel.AvailableAuthors.Should().HaveCount(1);
     }
+
+    [Fact]
+    public void ToggleCommentSelectionCommand_ShouldCallToggleCommentSelection()
+    {
+        // Arrange
+        var comment = new Comment
+        {
+            Id = 1,
+            Body = "Test comment",
+            Author = new User { Login = "testuser" }
+        };
+
+        // Act
+        _viewModel.ToggleCommentSelectionCommandCommand.Execute(comment);
+
+        // Assert
+        _viewModel.SelectedComments.Should().Contain(comment);
+    }
+
+    [Fact]
+    public void DuplicateSelectedCommentsCommand_ShouldDuplicateSelectedComments()
+    {
+        // Arrange
+        var originalComment = new Comment
+        {
+            Id = 1,
+            Body = "Original comment",
+            Type = CommentType.Issue,
+            Author = new User { Login = "testuser" },
+            PullRequest = new PullRequest { Id = 123 },
+            PullRequestId = 123
+        };
+        
+        _viewModel.Comments.Add(originalComment);
+        _viewModel.SelectedComments.Add(originalComment);
+
+        var initialCommentsCount = _viewModel.Comments.Count;
+
+        // Act
+        _viewModel.DuplicateSelectedCommentsCommand.Execute(null);
+
+        // Assert
+        _viewModel.Comments.Should().HaveCount(initialCommentsCount + 1);
+        var duplicatedComment = _viewModel.Comments.Last();
+        duplicatedComment.Body.Should().Be("Original comment");
+        duplicatedComment.Type.Should().Be(CommentType.Issue);
+        duplicatedComment.Author.Should().Be(originalComment.Author);
+        duplicatedComment.PullRequestId.Should().Be(123);
+        duplicatedComment.Id.Should().NotBe(originalComment.Id); // Should have different ID
+        _viewModel.StatusMessage.Should().Contain("comments duplicated successfully");
+    }
+
+    [Fact]
+    public void DuplicateSelectedCommentsCommand_WithNoSelection_ShouldShowMessage()
+    {
+        // Act
+        _viewModel.DuplicateSelectedCommentsCommand.Execute(null);
+
+        // Assert
+        _viewModel.StatusMessage.Should().Be("No comments selected for duplication");
+    }
+
+    [Fact]
+    public void IsCommentSelected_ShouldReturnCorrectValue()
+    {
+        // Arrange
+        var comment1 = new Comment { Id = 1, Body = "Comment 1", Author = new User { Login = "user1" } };
+        var comment2 = new Comment { Id = 2, Body = "Comment 2", Author = new User { Login = "user2" } };
+        
+        _viewModel.SelectedComments.Add(comment1);
+
+        // Act & Assert
+        _viewModel.IsCommentSelected(comment1).Should().BeTrue();
+        _viewModel.IsCommentSelected(comment2).Should().BeFalse();
+    }
 }
