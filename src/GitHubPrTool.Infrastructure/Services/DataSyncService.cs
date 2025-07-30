@@ -254,9 +254,40 @@ public class DataSyncService : IDataSyncService
             OnSyncProgressChanged("Comments", 0, $"Fetching comments for PR #{pullRequestNumber}...", 0, 0);
 
             // Get comments from GitHub API (both issue comments and review comments)
-            var issueComments = await _gitHubClient.Issue.Comment.GetAllForIssue(repo.Owner.Login, repo.Name, pullRequestNumber);
-            var reviewComments = await _gitHubClient.PullRequest.ReviewComment.GetAll(repo.Owner.Login, repo.Name, pullRequestNumber);
+            var issueComments = new List<IssueComment>();
+            var reviewComments = new List<PullRequestReviewComment>();
 
+            // Fetch issue comments with pagination
+            var issuePage = 1;
+            IReadOnlyList<IssueComment> issuePageComments;
+            do
+            {
+                issuePageComments = await _gitHubClient.Issue.Comment.GetAllForIssue(
+                    repo.Owner.Login, 
+                    repo.Name, 
+                    pullRequestNumber, 
+                    new ApiOptions { PageSize = 100, PageCount = 1, StartPage = issuePage });
+                issueComments.AddRange(issuePageComments);
+                issuePage++;
+
+                cancellationToken.ThrowIfCancellationRequested();
+            } while (issuePageComments.Count > 0);
+
+            // Fetch review comments with pagination
+            var reviewPage = 1;
+            IReadOnlyList<PullRequestReviewComment> reviewPageComments;
+            do
+            {
+                reviewPageComments = await _gitHubClient.PullRequest.ReviewComment.GetAll(
+                    repo.Owner.Login, 
+                    repo.Name, 
+                    pullRequestNumber, 
+                    new ApiOptions { PageSize = 100, PageCount = 1, StartPage = reviewPage });
+                reviewComments.AddRange(reviewPageComments);
+                reviewPage++;
+
+                cancellationToken.ThrowIfCancellationRequested();
+            } while (reviewPageComments.Count > 0);
             var totalComments = issueComments.Count + reviewComments.Count;
             _logger.LogInformation("Retrieved {IssueComments} issue comments and {ReviewComments} review comments", 
                 issueComments.Count, reviewComments.Count);
