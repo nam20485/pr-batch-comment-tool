@@ -302,7 +302,7 @@
                                                     Margin="0,0,0,8">
                                                 <StackPanel>
                                                     <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,0,0,8">
-                                                        <TextBlock Text="{Binding User.Login}" 
+                                                        <TextBlock Text="{Binding Author.Login}" 
                                                                    FontWeight="SemiBold"/>
                                                         <TextBlock Text="{Binding SubmittedAt, StringFormat='{}{0:MMM dd, yyyy HH:mm}'}" 
                                                                    FontSize="12" 
