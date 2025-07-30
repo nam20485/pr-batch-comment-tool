@@ -42,9 +42,9 @@ public class SearchService : ISearchService
             tasks.Add(SearchRepositoriesAsync(query, cancellationToken).ContinueWith(task =>
             {
                 var results = task.Result;
-                lock (repositories)
+                foreach (var result in results.Take(searchOptions.MaxResultsPerCategory))
                 {
-                    repositories.AddRange(results.Take(searchOptions.MaxResultsPerCategory));
+                    repositories.Add(result);
                 }
             }, cancellationToken));
         }
