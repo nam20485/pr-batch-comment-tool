@@ -1,0 +1,240 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:GitHubPrTool.Desktop.ViewModels"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
+             x:Class="GitHubPrTool.Desktop.Views.GlobalSearchView"
+             x:DataType="vm:GlobalSearchViewModel">
+    <Grid RowDefinitions="Auto,*">
+        <!-- Search Header -->
+        <Grid Grid.Row="0" Margin="10" RowDefinitions="Auto,Auto,Auto">
+            <!-- Search Input -->
+            <Grid Grid.Row="0" ColumnDefinitions="*,Auto,Auto">
+                <TextBox Grid.Column="0" 
+                         Text="{Binding SearchQuery}" 
+                         Watermark="Search repositories, pull requests, and comments..."
+                         Margin="0,0,10,0"/>
+                <Button Grid.Column="1" 
+                        Command="{Binding SearchCommand}" 
+                        Content="Search" 
+                        Classes="accent"
+                        IsEnabled="{Binding !IsSearching}"
+                        Margin="0,0,5,0"/>
+                <Button Grid.Column="2" 
+                        Command="{Binding ClearSearchCommand}" 
+                        Content="Clear" 
+                        IsEnabled="{Binding !IsSearching}"/>
+            </Grid>
+
+            <!-- Search Options -->
+            <Expander Grid.Row="1" Header="Search Options" Margin="0,10,0,0">
+                <StackPanel Spacing="10" Margin="10">
+                    <Grid ColumnDefinitions="*,*,*">
+                        <CheckBox Grid.Column="0" Content="Repositories" IsChecked="{Binding IncludeRepositories}"/>
+                        <CheckBox Grid.Column="1" Content="Pull Requests" IsChecked="{Binding IncludePullRequests}"/>
+                        <CheckBox Grid.Column="2" Content="Comments" IsChecked="{Binding IncludeComments}"/>
+                    </Grid>
+                    
+                    <Grid ColumnDefinitions="*,*,*">
+                        <CheckBox Grid.Column="0" Content="Case Sensitive" IsChecked="{Binding CaseSensitive}"/>
+                        <CheckBox Grid.Column="1" Content="Exact Match" IsChecked="{Binding ExactMatch}"/>
+                        <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="5">
+                            <TextBlock Text="Max Results:" VerticalAlignment="Center"/>
+                            <NumericUpDown Value="{Binding MaxResults}" Minimum="10" Maximum="200" Increment="10" Width="80"/>
+                        </StackPanel>
+                    </Grid>
+                    
+                    <Grid ColumnDefinitions="*,*,*">
+                        <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="5">
+                            <TextBlock Text="From:" VerticalAlignment="Center"/>
+                            <DatePicker SelectedDate="{Binding DateFrom}" Width="150"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="5">
+                            <TextBlock Text="To:" VerticalAlignment="Center"/>
+                            <DatePicker SelectedDate="{Binding DateTo}" Width="150"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="5">
+                            <Button Command="{Binding ResetFiltersCommand}" Content="Reset Filters"/>
+                        </StackPanel>
+                    </Grid>
+                    
+                    <StackPanel Orientation="Horizontal" Spacing="5">
+                        <TextBlock Text="Authors (comma-separated):" VerticalAlignment="Center"/>
+                        <TextBox Text="{Binding SelectedAuthors}" Width="300" Watermark="user1, user2, user3"/>
+                    </StackPanel>
+                </StackPanel>
+            </Expander>
+
+            <!-- Search Results Summary -->
+            <Grid Grid.Row="2" Margin="0,10,0,0" ColumnDefinitions="*,Auto">
+                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="10">
+                    <TextBlock Text="{Binding StatusMessage}" FontWeight="Bold"/>
+                    <TextBlock Text="{Binding TotalResults, StringFormat='({0} results)'}" IsVisible="{Binding !!TotalResults}"/>
+                    <TextBlock Text="{Binding ExecutionTimeMs, StringFormat='in {0}ms'}" IsVisible="{Binding !!ExecutionTimeMs}"/>
+                    <TextBlock Text="(truncated)" Foreground="Orange" IsVisible="{Binding IsTruncated}"/>
+                </StackPanel>
+                <ProgressBar Grid.Column="1" IsIndeterminate="{Binding IsSearching}" IsVisible="{Binding IsSearching}" Width="100"/>
+            </Grid>
+        </Grid>
+
+        <!-- Search Results -->
+        <TabControl Grid.Row="1" Margin="10,0,10,10">
+            <!-- All Results Tab -->
+            <TabItem Header="All Results">
+                <ScrollViewer>
+                    <StackPanel Spacing="10">
+                        <!-- Repository Results -->
+                        <Expander Header="{Binding RepositoryResults.Count, StringFormat='Repositories ({0})'}" IsExpanded="True">
+                            <ListBox ItemsSource="{Binding RepositoryResults}" MaxHeight="200">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid ColumnDefinitions="*,Auto" Margin="5">
+                                            <StackPanel Grid.Column="0">
+                                                <TextBlock Text="{Binding FullName}" FontWeight="Bold"/>
+                                                <TextBlock Text="{Binding Description}" TextWrapping="Wrap" Opacity="0.7"/>
+                                                <StackPanel Orientation="Horizontal" Spacing="10" Opacity="0.6">
+                                                    <TextBlock Text="{Binding Language}"/>
+                                                    <TextBlock Text="{Binding StargazersCount, StringFormat='★ {0}'}"/>
+                                                    <TextBlock Text="{Binding ForksCount, StringFormat='🍴 {0}'}"/>
+                                                </StackPanel>
+                                            </StackPanel>
+                                            <Button Grid.Column="1" 
+                                                    Command="{Binding $parent[UserControl].DataContext.NavigateToRepositoryCommand}" 
+                                                    CommandParameter="{Binding}" 
+                                                    Content="View"/>
+                                        </Grid>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                        </Expander>
+
+                        <!-- Pull Request Results -->
+                        <Expander Header="{Binding PullRequestResults.Count, StringFormat='Pull Requests ({0})'}" IsExpanded="True">
+                            <ListBox ItemsSource="{Binding PullRequestResults}" MaxHeight="200">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid ColumnDefinitions="*,Auto" Margin="5">
+                                            <StackPanel Grid.Column="0">
+                                                <TextBlock Text="{Binding Title}" FontWeight="Bold"/>
+                                                <TextBlock Text="{Binding Repository.FullName, StringFormat='#{0}'}" Opacity="0.7"/>
+                                                <StackPanel Orientation="Horizontal" Spacing="10" Opacity="0.6">
+                                                    <TextBlock Text="{Binding Author.Login}"/>
+                                                    <TextBlock Text="{Binding State}"/>
+                                                    <TextBlock Text="{Binding CreatedAt, StringFormat='yyyy-MM-dd'}"/>
+                                                </StackPanel>
+                                            </StackPanel>
+                                            <Button Grid.Column="1" 
+                                                    Command="{Binding $parent[UserControl].DataContext.NavigateToPullRequestCommand}" 
+                                                    CommandParameter="{Binding}" 
+                                                    Content="View"/>
+                                        </Grid>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                        </Expander>
+
+                        <!-- Comment Results -->
+                        <Expander Header="{Binding CommentResults.Count, StringFormat='Comments ({0})'}" IsExpanded="True">
+                            <ListBox ItemsSource="{Binding CommentResults}" MaxHeight="200">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid ColumnDefinitions="*,Auto" Margin="5">
+                                            <StackPanel Grid.Column="0">
+                                                <TextBlock Text="{Binding Body}" FontWeight="Bold" TextWrapping="Wrap" MaxHeight="60"/>
+                                                <StackPanel Orientation="Horizontal" Spacing="10" Opacity="0.6">
+                                                    <TextBlock Text="{Binding Author.Login}"/>
+                                                    <TextBlock Text="{Binding Type}"/>
+                                                    <TextBlock Text="{Binding CreatedAt, StringFormat='yyyy-MM-dd'}"/>
+                                                </StackPanel>
+                                            </StackPanel>
+                                            <Button Grid.Column="1" 
+                                                    Command="{Binding $parent[UserControl].DataContext.NavigateToCommentCommand}" 
+                                                    CommandParameter="{Binding}" 
+                                                    Content="View"/>
+                                        </Grid>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                        </Expander>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <!-- Individual Result Tabs -->
+            <TabItem Header="Repositories">
+                <ListBox ItemsSource="{Binding RepositoryResults}">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <Grid ColumnDefinitions="*,Auto" Margin="5">
+                                <StackPanel Grid.Column="0">
+                                    <TextBlock Text="{Binding FullName}" FontWeight="Bold"/>
+                                    <TextBlock Text="{Binding Description}" TextWrapping="Wrap" Opacity="0.7"/>
+                                    <StackPanel Orientation="Horizontal" Spacing="10" Opacity="0.6">
+                                        <TextBlock Text="{Binding Language}"/>
+                                        <TextBlock Text="{Binding StargazersCount, StringFormat='★ {0}'}"/>
+                                        <TextBlock Text="{Binding ForksCount, StringFormat='🍴 {0}'}"/>
+                                        <TextBlock Text="{Binding CreatedAt, StringFormat='Created: yyyy-MM-dd'}"/>
+                                    </StackPanel>
+                                </StackPanel>
+                                <Button Grid.Column="1" 
+                                        Command="{Binding $parent[UserControl].DataContext.NavigateToRepositoryCommand}" 
+                                        CommandParameter="{Binding}" 
+                                        Content="View Repository"/>
+                            </Grid>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </TabItem>
+
+            <TabItem Header="Pull Requests">
+                <ListBox ItemsSource="{Binding PullRequestResults}">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <Grid ColumnDefinitions="*,Auto" Margin="5">
+                                <StackPanel Grid.Column="0">
+                                    <TextBlock Text="{Binding Title}" FontWeight="Bold"/>
+                                    <TextBlock Text="{Binding Body}" TextWrapping="Wrap" Opacity="0.7" MaxHeight="60"/>
+                                    <StackPanel Orientation="Horizontal" Spacing="10" Opacity="0.6">
+                                        <TextBlock Text="{Binding Number, StringFormat='#{0}'}"/>
+                                        <TextBlock Text="{Binding Author.Login}"/>
+                                        <TextBlock Text="{Binding State}"/>
+                                        <TextBlock Text="{Binding CreatedAt, StringFormat='yyyy-MM-dd'}"/>
+                                    </StackPanel>
+                                </StackPanel>
+                                <Button Grid.Column="1" 
+                                        Command="{Binding $parent[UserControl].DataContext.NavigateToPullRequestCommand}" 
+                                        CommandParameter="{Binding}" 
+                                        Content="View PR"/>
+                            </Grid>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </TabItem>
+
+            <TabItem Header="Comments">
+                <ListBox ItemsSource="{Binding CommentResults}">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <Grid ColumnDefinitions="*,Auto" Margin="5">
+                                <StackPanel Grid.Column="0">
+                                    <TextBlock Text="{Binding Body}" FontWeight="Bold" TextWrapping="Wrap" MaxHeight="100"/>
+                                    <StackPanel Orientation="Horizontal" Spacing="10" Opacity="0.6">
+                                        <TextBlock Text="{Binding Author.Login}"/>
+                                        <TextBlock Text="{Binding Type}"/>
+                                        <TextBlock Text="{Binding Path}" IsVisible="{Binding !!Path}"/>
+                                        <TextBlock Text="{Binding CreatedAt, StringFormat='yyyy-MM-dd HH:mm'}"/>
+                                    </StackPanel>
+                                </StackPanel>
+                                <Button Grid.Column="1" 
+                                        Command="{Binding $parent[UserControl].DataContext.NavigateToCommentCommand}" 
+                                        CommandParameter="{Binding}" 
+                                        Content="View Comment"/>
+                            </Grid>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </TabItem>
+        </TabControl>
+    </Grid>
+</UserControl>
