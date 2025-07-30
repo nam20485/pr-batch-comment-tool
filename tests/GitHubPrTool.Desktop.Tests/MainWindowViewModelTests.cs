@@ -19,7 +19,24 @@ public class MainWindowViewModelTests
     {
         _mockAuthService = new Mock<IAuthService>();
         _mockLogger = new Mock<ILogger<MainWindowViewModel>>();
-        _viewModel = new MainWindowViewModel(_mockAuthService.Object, _mockLogger.Object);
+        
+        // Create a mock for the RepositoryListViewModel
+        // Since it has dependencies, we'll create a simple mock
+        var mockGitHubRepo = new Mock<IGitHubRepository>();
+        var mockDataSync = new Mock<IDataSyncService>();
+        var mockAuth = new Mock<IAuthService>();
+        var mockRepoLogger = new Mock<ILogger<RepositoryListViewModel>>();
+        
+        var repositoryListViewModel = new RepositoryListViewModel(
+            mockGitHubRepo.Object, 
+            mockDataSync.Object, 
+            mockAuth.Object, 
+            mockRepoLogger.Object);
+        
+        _viewModel = new MainWindowViewModel(
+            _mockAuthService.Object, 
+            repositoryListViewModel, 
+            _mockLogger.Object);
     }
 
     [Fact]
@@ -46,6 +63,8 @@ public class MainWindowViewModelTests
         // Assert
         _viewModel.StatusMessage.Should().Be("Loading repositories...");
         _viewModel.IsContentLoaded.Should().BeTrue();
+        _viewModel.CurrentContent.Should().NotBeNull();
+        _viewModel.CurrentContent.Should().BeOfType<RepositoryListViewModel>();
     }
 
     [Fact]

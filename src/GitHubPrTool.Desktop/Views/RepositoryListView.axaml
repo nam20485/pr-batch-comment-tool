@@ -1,0 +1,182 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:GitHubPrTool.Desktop.ViewModels"
+             xmlns:models="using:GitHubPrTool.Core.Models"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
+             x:Class="GitHubPrTool.Desktop.Views.RepositoryListView"
+             x:DataType="vm:RepositoryListViewModel">
+
+    <Design.DataContext>
+        <!-- Design-time data context for IntelliSense -->
+        <vm:RepositoryListViewModel/>
+    </Design.DataContext>
+
+    <Grid RowDefinitions="Auto,Auto,*,Auto">
+        <!-- Header -->
+        <StackPanel Grid.Row="0" Margin="0,0,0,16">
+            <TextBlock Text="📁 Repositories" 
+                       FontSize="20" 
+                       FontWeight="SemiBold" 
+                       Margin="0,0,0,8"/>
+            <TextBlock Text="Browse and filter your accessible GitHub repositories" 
+                       Foreground="{DynamicResource SystemBaseMediumColorBrush}"/>
+        </StackPanel>
+
+        <!-- Search and Filter Controls -->
+        <Border Grid.Row="1" 
+                Background="{DynamicResource SystemControlBackgroundBaseLowBrush}"
+                CornerRadius="6"
+                Padding="12"
+                Margin="0,0,0,16">
+            <Grid RowDefinitions="Auto,Auto" ColumnDefinitions="*,Auto,Auto">
+                <!-- Search Row -->
+                <StackPanel Grid.Row="0" Grid.ColumnSpan="3" Orientation="Horizontal" Spacing="8" Margin="0,0,0,12">
+                    <TextBox Name="SearchBox"
+                             Text="{Binding SearchText}"
+                             Watermark="Search repositories by name, description..."
+                             Width="300"
+                             KeyDown="SearchBox_KeyDown"/>
+                    
+                    <Button Content="Search" 
+                            Command="{Binding SearchRepositoriesCommand}"
+                            IsEnabled="{Binding !IsLoading}"/>
+                    
+                    <Button Content="Load All" 
+                            Command="{Binding LoadRepositoriesCommand}"
+                            IsEnabled="{Binding !IsLoading}"/>
+                    
+                    <Button Content="🔄 Sync" 
+                            Command="{Binding SyncRepositoriesCommand}"
+                            IsEnabled="{Binding !IsLoading}"
+                            ToolTip.Tip="Sync repositories from GitHub"/>
+                </StackPanel>
+
+                <!-- Filter Row -->
+                <StackPanel Grid.Row="1" Grid.Column="0" Orientation="Horizontal" Spacing="12">
+                    <StackPanel Orientation="Horizontal" Spacing="4">
+                        <TextBlock Text="Language:" VerticalAlignment="Center"/>
+                        <ComboBox ItemsSource="{Binding LanguageFilters}"
+                                  SelectedItem="{Binding SelectedLanguageFilter}"
+                                  MinWidth="120"/>
+                    </StackPanel>
+                    
+                    <CheckBox Content="Private only" IsChecked="{Binding ShowPrivateOnly}"/>
+                    <CheckBox Content="Public only" IsChecked="{Binding ShowPublicOnly}"/>
+                </StackPanel>
+
+                <!-- Results Count -->
+                <TextBlock Grid.Row="1" Grid.Column="2" 
+                           Text="{Binding Repositories.Count}"
+                           VerticalAlignment="Center"
+                           HorizontalAlignment="Right"
+                           Foreground="{DynamicResource SystemBaseMediumColorBrush}"/>
+            </Grid>
+        </Border>
+
+        <!-- Repository List -->
+        <ListBox Grid.Row="2" 
+                 ItemsSource="{Binding Repositories}"
+                 SelectedItem="{Binding SelectedRepository}">
+            <ListBox.ItemTemplate>
+                <DataTemplate DataType="models:Repository">
+                    <Border Padding="12" 
+                            Background="Transparent"
+                            CornerRadius="4"
+                            Margin="0,2">
+                        <Grid ColumnDefinitions="Auto,*,Auto,Auto,Auto,Auto">
+                            <!-- Icon and Name -->
+                            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8" VerticalAlignment="Top">
+                                <TextBlock Text="{Binding Private}" 
+                                           VerticalAlignment="Center"
+                                           IsVisible="False"/>
+                                <TextBlock Text="🔒" 
+                                           VerticalAlignment="Center"
+                                           IsVisible="{Binding Private}"/>
+                                <TextBlock Text="📁" 
+                                           VerticalAlignment="Center"
+                                           IsVisible="{Binding !Private}"/>
+                                <StackPanel>
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <TextBlock Text="{Binding Name}" 
+                                                   FontWeight="SemiBold"
+                                                   VerticalAlignment="Center"/>
+                                        <Border Background="{DynamicResource SystemControlBackgroundBaseMediumLowBrush}"
+                                                Padding="4,2"
+                                                CornerRadius="2"
+                                                IsVisible="{Binding !!Language}">
+                                            <TextBlock Text="{Binding Language}" 
+                                                       FontSize="10"
+                                                       VerticalAlignment="Center"/>
+                                        </Border>
+                                    </StackPanel>
+                                    <TextBlock Text="{Binding Description}" 
+                                               Foreground="{DynamicResource SystemBaseMediumColorBrush}"
+                                               TextWrapping="Wrap"
+                                               MaxWidth="400"
+                                               Margin="0,2,0,0"
+                                               IsVisible="{Binding !!Description}"/>
+                                    <TextBlock Text="{Binding FullName}" 
+                                               FontSize="10"
+                                               Foreground="{DynamicResource SystemBaseMediumColorBrush}"
+                                               Margin="0,2,0,0"/>
+                                </StackPanel>
+                            </StackPanel>
+
+                            <!-- Stats -->
+                            <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="16" VerticalAlignment="Center" Margin="16,0">
+                                <StackPanel Orientation="Horizontal" Spacing="4">
+                                    <TextBlock Text="⭐" FontSize="12"/>
+                                    <TextBlock Text="{Binding StargazersCount}" FontSize="12"/>
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" Spacing="4">
+                                    <TextBlock Text="🍴" FontSize="12"/>
+                                    <TextBlock Text="{Binding ForksCount}" FontSize="12"/>
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" Spacing="4">
+                                    <TextBlock Text="🐛" FontSize="12"/>
+                                    <TextBlock Text="{Binding OpenIssuesCount}" FontSize="12"/>
+                                </StackPanel>
+                            </StackPanel>
+
+                            <!-- Last Updated -->
+                            <TextBlock Grid.Column="3" 
+                                       Text="{Binding UpdatedAt}" 
+                                       FontSize="12"
+                                       Foreground="{DynamicResource SystemBaseMediumColorBrush}"
+                                       VerticalAlignment="Center"
+                                       Margin="16,0"/>
+
+                            <!-- Action Button -->
+                            <Button Grid.Column="4" 
+                                    Content="View PRs" 
+                                    Command="{Binding $parent[ListBox].((vm:RepositoryListViewModel)DataContext).ViewPullRequestsCommand}"
+                                    Classes="outline"
+                                    VerticalAlignment="Center"
+                                    Margin="16,0,0,0"/>
+                        </Grid>
+                    </Border>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+
+        <!-- Status Bar -->
+        <Border Grid.Row="3" 
+                Background="{DynamicResource SystemControlBackgroundBaseLowBrush}"
+                Padding="12,8"
+                Margin="0,16,0,0"
+                CornerRadius="6">
+            <Grid ColumnDefinitions="*,Auto">
+                <TextBlock Grid.Column="0" 
+                           Text="{Binding StatusMessage}" 
+                           VerticalAlignment="Center"/>
+                
+                <ProgressBar Grid.Column="1" 
+                             Width="100" 
+                             IsIndeterminate="True"
+                             IsVisible="{Binding IsLoading}"/>
+            </Grid>
+        </Border>
+    </Grid>
+</UserControl>

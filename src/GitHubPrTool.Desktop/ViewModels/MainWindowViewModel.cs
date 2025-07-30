@@ -1,3 +1,4 @@
+using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using GitHubPrTool.Core.Interfaces;
@@ -29,14 +30,27 @@ public partial class MainWindowViewModel : ObservableObject
     [ObservableProperty]
     private bool _isContentLoaded;
 
+    [ObservableProperty]
+    private object? _currentContent;
+
+    /// <summary>
+    /// Repository list view model for navigation.
+    /// </summary>
+    public RepositoryListViewModel? RepositoryListViewModel { get; private set; }
+
     /// <summary>
     /// Initializes a new instance of the MainWindowViewModel.
     /// </summary>
     /// <param name="authService">GitHub authentication service.</param>
+    /// <param name="repositoryListViewModel">Repository list view model.</param>
     /// <param name="logger">Logger for this view model.</param>
-    public MainWindowViewModel(IAuthService authService, ILogger<MainWindowViewModel> logger)
+    public MainWindowViewModel(
+        IAuthService authService, 
+        RepositoryListViewModel repositoryListViewModel,
+        ILogger<MainWindowViewModel> logger)
     {
         _authService = authService;
+        RepositoryListViewModel = repositoryListViewModel;
         _logger = logger;
         
         // Initialize authentication status
@@ -88,8 +102,8 @@ public partial class MainWindowViewModel : ObservableObject
     {
         StatusMessage = "Loading repositories...";
         IsContentLoaded = true;
+        CurrentContent = RepositoryListViewModel;
         _logger.LogInformation("Navigating to repositories view");
-        // TODO: Implement navigation to repositories view
     }
 
     /// <summary>
