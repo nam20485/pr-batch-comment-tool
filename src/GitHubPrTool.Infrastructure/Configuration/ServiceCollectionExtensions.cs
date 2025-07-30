@@ -60,6 +60,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IAuthService, GitHubAuthService>();
         services.AddScoped<IDataSynchronizationService, DataSynchronizationService>();
         services.AddScoped<IGeminiService, GeminiService>();
+        services.AddScoped<DatabaseResilienceService>();
 
         // Add HTTP client for external API calls
         services.AddHttpClient<GeminiService>();
@@ -109,6 +110,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IAuthService, GitHubAuthService>();
         services.AddScoped<IDataSynchronizationService, DataSynchronizationService>();
         services.AddScoped<IGeminiService, GeminiService>();
+        services.AddScoped<DatabaseResilienceService>();
 
         // Add HTTP client for external API calls
         services.AddHttpClient<GeminiService>();
