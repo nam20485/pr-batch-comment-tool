@@ -58,11 +58,9 @@ public static class ServiceCollectionExtensions
         services.AddScoped<ICacheService, SqliteCacheService>();
         services.AddScoped<IGitHubRepository, GitHubRepositoryService>();
         services.AddScoped<IAuthService, GitHubAuthService>();
-        services.AddScoped<IDataSynchronizationService, DataSynchronizationService>();
-        services.AddScoped<IGeminiService, GeminiService>();
 
         // Add HTTP client for external API calls
-        services.AddHttpClient<GeminiService>();
+        services.AddHttpClient();
 
         return services;
     }
@@ -107,11 +105,9 @@ public static class ServiceCollectionExtensions
         services.AddScoped<ICacheService, SqliteCacheService>();
         services.AddScoped<IGitHubRepository, GitHubRepositoryService>();
         services.AddScoped<IAuthService, GitHubAuthService>();
-        services.AddScoped<IDataSynchronizationService, DataSynchronizationService>();
-        services.AddScoped<IGeminiService, GeminiService>();
 
         // Add HTTP client for external API calls
-        services.AddHttpClient<GeminiService>();
+        services.AddHttpClient();
 
         return services;
     }
