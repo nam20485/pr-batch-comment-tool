@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Octokit;
 
 namespace GitHubPrTool.Infrastructure.Configuration;
@@ -65,7 +66,21 @@ public static class ServiceCollectionExtensions
         services.AddScoped<ITokenStorage, SecureTokenStorage>();
         services.AddScoped<IGitHubRepository, GitHubRepositoryService>();
         services.AddScoped<IDataSyncService, DataSyncService>();
-        services.AddScoped<IAuthService, GitHubAuthService>();
+        
+        // Add GitHub Auth Service with configuration
+        services.AddScoped<IAuthService>(provider =>
+        {
+            var gitHubClient = provider.GetRequiredService<IGitHubClient>();
+            var cacheService = provider.GetRequiredService<ICacheService>();
+            var tokenStorage = provider.GetRequiredService<ITokenStorage>();
+            var logger = provider.GetRequiredService<ILogger<GitHubAuthService>>();
+            
+            // Get GitHub configuration from appsettings or environment variables
+            var clientId = configuration["GitHub:ClientId"] ?? Environment.GetEnvironmentVariable("GITHUB_CLIENT_ID") ?? "your-github-client-id";
+            var clientSecret = configuration["GitHub:ClientSecret"] ?? Environment.GetEnvironmentVariable("GITHUB_CLIENT_SECRET") ?? "your-github-client-secret";
+            
+            return new GitHubAuthService(gitHubClient, cacheService, tokenStorage, logger, clientId, clientSecret);
+        });
         
         // Add Phase 6 services
         services.AddScoped<ISearchService, SearchService>();
@@ -132,7 +147,21 @@ public static class ServiceCollectionExtensions
         services.AddScoped<ITokenStorage, SecureTokenStorage>();
         services.AddScoped<IGitHubRepository, GitHubRepositoryService>();
         services.AddScoped<IDataSyncService, DataSyncService>();
-        services.AddScoped<IAuthService, GitHubAuthService>();
+        
+        // Add GitHub Auth Service with test configuration
+        services.AddScoped<IAuthService>(provider =>
+        {
+            var gitHubClient = provider.GetRequiredService<IGitHubClient>();
+            var cacheService = provider.GetRequiredService<ICacheService>();
+            var tokenStorage = provider.GetRequiredService<ITokenStorage>();
+            var logger = provider.GetRequiredService<ILogger<GitHubAuthService>>();
+            
+            // Use test credentials for testing
+            var clientId = "test-client-id";
+            var clientSecret = "test-client-secret";
+            
+            return new GitHubAuthService(gitHubClient, cacheService, tokenStorage, logger, clientId, clientSecret);
+        });
         
         // Add Phase 6 services
         services.AddScoped<ISearchService, SearchService>();
