@@ -26,7 +26,6 @@ public class MainWindowViewModelTests
         
         // Create mocks for the ViewModels
         var mockGitHubRepo = new Mock<IGitHubRepository>();
-        var mockDataSync = new Mock<IDataSyncService>();
         var mockSearchService = new Mock<ISearchService>();
         var mockAuth = new Mock<IAuthService>();
         var mockRepoLogger = new Mock<ILogger<RepositoryListViewModel>>();
@@ -37,24 +36,24 @@ public class MainWindowViewModelTests
         
         var repositoryListViewModel = new RepositoryListViewModel(
             mockGitHubRepo.Object, 
-            mockDataSync.Object, 
+            _mockDataSyncService.Object, 
             mockAuth.Object, 
             mockRepoLogger.Object);
             
         var pullRequestListViewModel = new PullRequestListViewModel(
             mockGitHubRepo.Object, 
-            mockDataSync.Object, 
+            _mockDataSyncService.Object, 
             mockAuth.Object, 
             mockPrLogger.Object);
             
         var pullRequestDetailViewModel = new PullRequestDetailViewModel(
             mockGitHubRepo.Object,
-            mockDataSync.Object,
+            _mockDataSyncService.Object,
             mockPrDetailLogger.Object);
             
         var commentListViewModel = new CommentListViewModel(
             mockGitHubRepo.Object,
-            mockDataSync.Object,
+            _mockDataSyncService.Object,
             mockCommentLogger.Object);
             
         var globalSearchViewModel = new GlobalSearchViewModel(

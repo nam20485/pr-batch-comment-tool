@@ -66,6 +66,11 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IGitHubRepository, GitHubRepositoryService>();
         services.AddScoped<IDataSyncService, DataSyncService>();
         services.AddScoped<IAuthService, GitHubAuthService>();
+        
+        // Add Phase 6 services
+        services.AddScoped<ISearchService, SearchService>();
+        services.AddScoped<ICommentExportImportService, CommentExportImportService>();
+        services.AddScoped<INetworkConnectivityService, NetworkConnectivityService>();
 
         // Add HTTP client for external API calls
         services.AddHttpClient();
@@ -120,6 +125,11 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IGitHubRepository, GitHubRepositoryService>();
         services.AddScoped<IDataSyncService, DataSyncService>();
         services.AddScoped<IAuthService, GitHubAuthService>();
+        
+        // Add Phase 6 services
+        services.AddScoped<ISearchService, SearchService>();
+        services.AddScoped<ICommentExportImportService, CommentExportImportService>();
+        services.AddScoped<INetworkConnectivityService, NetworkConnectivityService>();
 
         // Add HTTP client for external API calls
         services.AddHttpClient();

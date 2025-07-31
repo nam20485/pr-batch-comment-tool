@@ -126,23 +126,14 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
         // Wire up network connectivity events
         _networkConnectivityService.ConnectivityChanged += OnConnectivityChanged;
         
-        // Asynchronously initialize the view model state
-        _ = InitializeAsync();
-    }
-
-    /// <summary>
-    /// Asynchronously initializes the view model.
-    /// </summary>
-    private async Task InitializeAsync()
-    {
         // Initialize authentication status
-        await UpdateAuthenticationStatusAsync();
+        _ = Task.Run(async () => await UpdateAuthenticationStatusAsync());
         
         // Initialize connectivity monitoring
         _networkConnectivityService.StartMonitoring();
         
         // Initial connectivity check
-        await _networkConnectivityService.CheckConnectivityAsync();
+        _ = Task.Run(async () => await _networkConnectivityService.CheckConnectivityAsync());
     }
 
     /// <summary>
@@ -216,7 +207,7 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
         IsContentLoaded = true;
         CurrentContent = CommentListViewModel;
         _logger.LogInformation("Navigating to comments view");
-    }
+    }   
 
     /// <summary>
     /// Command to navigate to global search view.
@@ -296,6 +287,10 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
         _logger.LogInformation("Application exit requested");
         
         Dispose();
+        
+        
+        // Clean up network monitoring
+        _networkConnectivityService.StopMonitoring();
         
         System.Environment.Exit(0);
     }

@@ -6,9 +6,48 @@
     "configurations": [
         {
             "name": "C#: GitHubPrTool.Desktop Debug",
-            "type": "dotnet",
+            "type": "coreclr",
             "request": "launch",
-            "projectPath": "${workspaceFolder}/src/GitHubPrTool.Desktop/GitHubPrTool.Desktop.csproj"
+            "preLaunchTask": "dotnet: build",
+            "program": "${workspaceFolder}/src/GitHubPrTool.Desktop/bin/Debug/net8.0/GitHubPrTool.Desktop.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}/src/GitHubPrTool.Desktop",
+            "console": "internalConsole",
+            "stopAtEntry": false,
+            "justMyCode": false,
+            "requireExactSource": false,
+            "suppressJITOptimizations": true,
+            "enableStepFiltering": false,
+            "symbolOptions": {
+                "searchPaths": [],
+                "searchMicrosoftSymbolServer": true,
+                "searchNuGetOrgSymbolServer": true,                
+                "moduleFilter": {
+                    "mode": "loadAllButExcluded",
+                    "excludedModules": []
+                }
+            },
+            "sourceFileMap": {
+                "/src": "${env:USERPROFILE}/.nuget/packages"
+            }
+        },
+        {
+            "name": "C#: GitHubPrTool.Desktop Debug (Attach)",
+            "type": "coreclr",
+            "request": "attach",
+            "processId": "${command:pickProcess}",
+            "justMyCode": false,
+            "requireExactSource": false,
+            "suppressJITOptimizations": true,
+            "enableStepFiltering": false,
+            "symbolOptions": {
+                "searchMicrosoftSymbolServer": true,
+                "searchNuGetOrgSymbolServer": true,
+                "moduleFilter": {
+                    "mode": "loadAllButExcluded",
+                    "excludedModules": []
+                }
+            }
         }
     ]
 }
