@@ -155,4 +155,14 @@ public class Comment
     /// Replies to this comment
     /// </summary>
     public ICollection<Comment> Replies { get; set; } = new List<Comment>();
+
+    /// <summary>
+    /// AI-generated category for this comment
+    /// </summary>
+    public CommentCategory? AICategory { get; set; }
+
+    /// <summary>
+    /// AI-generated insights about this comment
+    /// </summary>
+    public ICollection<AIInsight> AIInsights { get; set; } = new List<AIInsight>();
 }
