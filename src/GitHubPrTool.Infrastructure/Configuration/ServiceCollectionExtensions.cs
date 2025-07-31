@@ -72,6 +72,14 @@ public static class ServiceCollectionExtensions
         services.AddScoped<ICommentExportImportService, CommentExportImportService>();
         services.AddScoped<INetworkConnectivityService, NetworkConnectivityService>();
 
+        // Add Phase 7 AI services
+        services.Configure<AIConfiguration>(configuration.GetSection(AIConfiguration.SectionName));
+        services.AddScoped<IAIService, GeminiAIService>();
+        services.AddScoped<IArchitectureAnalyzer, ArchitectureAnalyzer>();
+        services.AddScoped<ICommentAnalyzer, CommentAnalyzer>();
+        services.AddScoped<ICommentSuggestionService, CommentSuggestionService>();
+        services.AddScoped<IProjectKickstartService, ProjectKickstartService>();
+
         // Add HTTP client for external API calls
         services.AddHttpClient();
 
@@ -130,6 +138,14 @@ public static class ServiceCollectionExtensions
         services.AddScoped<ISearchService, SearchService>();
         services.AddScoped<ICommentExportImportService, CommentExportImportService>();
         services.AddScoped<INetworkConnectivityService, NetworkConnectivityService>();
+
+        // Add Phase 7 AI services
+        if (configuration != null) services.Configure<AIConfiguration>(configuration.GetSection(AIConfiguration.SectionName));
+        services.AddScoped<IAIService, GeminiAIService>();
+        services.AddScoped<IArchitectureAnalyzer, ArchitectureAnalyzer>();
+        services.AddScoped<ICommentAnalyzer, CommentAnalyzer>();
+        services.AddScoped<ICommentSuggestionService, CommentSuggestionService>();
+        services.AddScoped<IProjectKickstartService, ProjectKickstartService>();
 
         // Add HTTP client for external API calls
         services.AddHttpClient();
