@@ -13,6 +13,11 @@ public class ProjectKickstartService : IProjectKickstartService
     private readonly IAIService _aiService;
     private readonly ILogger<ProjectKickstartService> _logger;
 
+    /// <summary>
+    /// Maximum number of project files to analyze for kickstart planning
+    /// </summary>
+    private const int MaxProjectFilesToAnalyze = 15;
+
     public ProjectKickstartService(
         IAIService aiService,
         ILogger<ProjectKickstartService> logger)
@@ -281,7 +286,32 @@ Consider:
     {
         try
         {
-            if (!Directory.Exists(repositoryPath))
+            // Validate and normalize the repository path for security
+            if (string.IsNullOrWhiteSpace(repositoryPath))
+            {
+                return Task.FromResult("Repository path cannot be null or empty");
+            }
+
+            var fullPath = Path.GetFullPath(repositoryPath);
+            
+            // Basic security check - ensure we're not accessing system directories
+            var prohibitedPaths = new[]
+            {
+                Environment.GetFolderPath(Environment.SpecialFolder.System),
+                Environment.GetFolderPath(Environment.SpecialFolder.Windows),
+                Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles),
+                Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86)
+            };
+
+            if (prohibitedPaths.Any(prohibited => 
+                !string.IsNullOrEmpty(prohibited) && 
+                fullPath.StartsWith(prohibited, StringComparison.OrdinalIgnoreCase)))
+            {
+                _logger.LogWarning("Access denied to protected system directory: {RepositoryPath}", repositoryPath);
+                return Task.FromResult($"Access denied to protected directory: {repositoryPath}");
+            }
+
+            if (!Directory.Exists(fullPath))
             {
                 return Task.FromResult($"Repository path does not exist: {repositoryPath}");
             }
@@ -289,14 +319,14 @@ Consider:
             var structure = new List<string>();
             
             // Get project files
-            var projectFiles = Directory.GetFiles(repositoryPath, "*.csproj", SearchOption.AllDirectories)
-                .Concat(Directory.GetFiles(repositoryPath, "*.sln", SearchOption.AllDirectories))
-                .Concat(Directory.GetFiles(repositoryPath, "package.json", SearchOption.AllDirectories))
-                .Take(15);
+            var projectFiles = Directory.GetFiles(fullPath, "*.csproj", SearchOption.AllDirectories)
+                .Concat(Directory.GetFiles(fullPath, "*.sln", SearchOption.AllDirectories))
+                .Concat(Directory.GetFiles(fullPath, "package.json", SearchOption.AllDirectories))
+                .Take(MaxProjectFilesToAnalyze);
 
             foreach (var file in projectFiles)
             {
-                var relativePath = Path.GetRelativePath(repositoryPath, file);
+                var relativePath = Path.GetRelativePath(fullPath, file);
                 structure.Add($"Project file: {relativePath}");
             }
 
@@ -304,7 +334,7 @@ Consider:
             var keyFolders = new[] { "src", "test", "tests", "docs", "scripts", "Controllers", "Services", "Models", "Views", "Components" };
             foreach (var folder in keyFolders)
             {
-                var folderPath = Path.Combine(repositoryPath, folder);
+                var folderPath = Path.Combine(fullPath, folder);
                 if (Directory.Exists(folderPath))
                 {
                     var fileCount = Directory.GetFiles(folderPath, "*", SearchOption.AllDirectories).Length;
@@ -313,13 +343,13 @@ Consider:
             }
 
             // Get README or documentation files
-            var docFiles = Directory.GetFiles(repositoryPath, "README*", SearchOption.TopDirectoryOnly)
-                .Concat(Directory.GetFiles(repositoryPath, "*.md", SearchOption.TopDirectoryOnly))
+            var docFiles = Directory.GetFiles(fullPath, "README*", SearchOption.TopDirectoryOnly)
+                .Concat(Directory.GetFiles(fullPath, "*.md", SearchOption.TopDirectoryOnly))
                 .Take(5);
 
             foreach (var file in docFiles)
             {
-                var relativePath = Path.GetRelativePath(repositoryPath, file);
+                var relativePath = Path.GetRelativePath(fullPath, file);
                 structure.Add($"Documentation: {relativePath}");
             }
 

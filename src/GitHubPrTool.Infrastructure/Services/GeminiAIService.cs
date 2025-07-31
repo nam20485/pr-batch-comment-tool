@@ -47,8 +47,19 @@ public class GeminiAIService : IAIService
         {
             _logger.LogDebug("Generating text with prompt length: {PromptLength}", prompt.Length);
 
-            // For now, return a mock response since setting up Gemini API requires authentication
-            // In a real implementation, this would make an HTTP call to the Gemini API
+            // MOCK IMPLEMENTATION - This is a placeholder for development and testing purposes
+            // TODO: Replace this with actual Gemini API integration once credentials are configured
+            // 
+            // For production use, ensure the following configurations are set in AIConfiguration:
+            // - APIEndpoint: The base URL of the Gemini API (e.g., https://generativelanguage.googleapis.com)
+            // - ApiKey: The authentication token for accessing the Gemini API
+            // - ProjectId: Your Google Cloud project ID 
+            // - Location: The deployment location (e.g., us-central1)
+            // - ModelName: The specific Gemini model to use (e.g., gemini-1.5-pro)
+            // - Timeout: The request timeout duration
+            //
+            // Real implementation would use HttpClient to make authenticated calls to:
+            // POST https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent
             var mockResponse = GenerateMockResponse(prompt, systemInstructions);
             
             _logger.LogDebug("Generated mock text with length: {ResponseLength}", mockResponse.Length);

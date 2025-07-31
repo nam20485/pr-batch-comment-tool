@@ -268,8 +268,11 @@ Consider:
         {
             _logger.LogInformation("Recording feedback for suggestion: {SuggestionId}", suggestion.Id);
 
+            // Validate and sanitize feedback input
+            var sanitizedFeedback = SanitizeInput(feedback);
+            
             // Update the suggestion with user feedback
-            suggestion.UserFeedback = feedback;
+            suggestion.UserFeedback = sanitizedFeedback;
             suggestion.IsUsed = true;
 
             // In a real implementation, this would be saved to a database
@@ -368,5 +371,37 @@ Consider:
                 .ToList();
         }
         return new List<string>();
+    }
+
+    /// <summary>
+    /// Sanitizes user input to prevent injection attacks and ensure data safety
+    /// </summary>
+    /// <param name="input">Raw user input</param>
+    /// <returns>Sanitized input safe for storage and processing</returns>
+    private static string SanitizeInput(string? input)
+    {
+        if (string.IsNullOrWhiteSpace(input))
+        {
+            return string.Empty;
+        }
+
+        // Remove potentially dangerous characters and limit length
+        var sanitized = input
+            .Replace("<", "&lt;")
+            .Replace(">", "&gt;")
+            .Replace("\"", "&quot;")
+            .Replace("'", "&#x27;")
+            .Replace("&", "&amp;")
+            .Replace("\0", "")
+            .Trim();
+
+        // Limit length to prevent excessive storage/processing
+        const int maxLength = 2000;
+        if (sanitized.Length > maxLength)
+        {
+            sanitized = sanitized.Substring(0, maxLength) + "...";
+        }
+
+        return sanitized;
     }
 }

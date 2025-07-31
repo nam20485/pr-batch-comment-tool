@@ -202,7 +202,32 @@ Focus on:
     {
         try
         {
-            if (!Directory.Exists(repositoryPath))
+            // Validate and normalize the repository path for security
+            if (string.IsNullOrWhiteSpace(repositoryPath))
+            {
+                return Task.FromResult("Repository path cannot be null or empty");
+            }
+
+            var fullPath = Path.GetFullPath(repositoryPath);
+            
+            // Basic security check - ensure we're not accessing system directories
+            var prohibitedPaths = new[]
+            {
+                Environment.GetFolderPath(Environment.SpecialFolder.System),
+                Environment.GetFolderPath(Environment.SpecialFolder.Windows),
+                Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles),
+                Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86)
+            };
+
+            if (prohibitedPaths.Any(prohibited => 
+                !string.IsNullOrEmpty(prohibited) && 
+                fullPath.StartsWith(prohibited, StringComparison.OrdinalIgnoreCase)))
+            {
+                _logger.LogWarning("Access denied to protected system directory: {RepositoryPath}", repositoryPath);
+                return Task.FromResult($"Access denied to protected directory: {repositoryPath}");
+            }
+
+            if (!Directory.Exists(fullPath))
             {
                 return Task.FromResult($"Repository path does not exist: {repositoryPath}");
             }
@@ -210,13 +235,13 @@ Focus on:
             var structure = new List<string>();
             
             // Get project files
-            var projectFiles = Directory.GetFiles(repositoryPath, "*.csproj", SearchOption.AllDirectories)
-                .Concat(Directory.GetFiles(repositoryPath, "*.sln", SearchOption.AllDirectories))
+            var projectFiles = Directory.GetFiles(fullPath, "*.csproj", SearchOption.AllDirectories)
+                .Concat(Directory.GetFiles(fullPath, "*.sln", SearchOption.AllDirectories))
                 .Take(MaxProjectFilesForAnalysis); // Limit for analysis
 
             foreach (var file in projectFiles)
             {
-                var relativePath = Path.GetRelativePath(repositoryPath, file);
+                var relativePath = Path.GetRelativePath(fullPath, file);
                 structure.Add($"Project: {relativePath}");
             }
 
@@ -224,12 +249,12 @@ Focus on:
             var keyFolders = new[] { "src", "test", "tests", "docs", "scripts", "Controllers", "Services", "Models", "Views" };
             foreach (var folder in keyFolders)
             {
-                var folderPath = Path.Combine(repositoryPath, folder);
+                var folderPath = Path.Combine(fullPath, folder);
                 if (Directory.Exists(folderPath))
                 {
                     var files = Directory.GetFiles(folderPath, "*.cs", SearchOption.AllDirectories)
                         .Take(MaxFilesPerFolderForAnalysis) // Limit files for analysis
-                        .Select(f => Path.GetRelativePath(repositoryPath, f));
+                        .Select(f => Path.GetRelativePath(fullPath, f));
                     
                     structure.Add($"Folder {folder}: {string.Join(", ", files)}");
                 }
