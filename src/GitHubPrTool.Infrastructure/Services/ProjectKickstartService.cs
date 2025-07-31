@@ -277,13 +277,13 @@ Consider:
         }
     }
 
-    private async Task<string> AnalyzeRepositoryStructure(string repositoryPath)
+    private Task<string> AnalyzeRepositoryStructure(string repositoryPath)
     {
         try
         {
             if (!Directory.Exists(repositoryPath))
             {
-                return $"Repository path does not exist: {repositoryPath}";
+                return Task.FromResult($"Repository path does not exist: {repositoryPath}");
             }
 
             var structure = new List<string>();
@@ -323,12 +323,12 @@ Consider:
                 structure.Add($"Documentation: {relativePath}");
             }
 
-            return string.Join("\n", structure);
+            return Task.FromResult(string.Join("\n", structure));
         }
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "Error analyzing repository structure: {RepositoryPath}", repositoryPath);
-            return $"Unable to analyze structure: {ex.Message}";
+            return Task.FromResult($"Unable to analyze structure: {ex.Message}");
         }
     }
 

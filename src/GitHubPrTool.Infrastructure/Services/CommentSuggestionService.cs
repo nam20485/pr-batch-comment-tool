@@ -1,5 +1,6 @@
 using GitHubPrTool.Core.Interfaces;
 using GitHubPrTool.Core.Models;
+using GitHubPrTool.Infrastructure.Utilities;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
 

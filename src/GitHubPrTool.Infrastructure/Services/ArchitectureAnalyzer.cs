@@ -1,5 +1,6 @@
 using GitHubPrTool.Core.Interfaces;
 using GitHubPrTool.Core.Models;
+using GitHubPrTool.Infrastructure.Utilities;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
 
@@ -10,6 +11,9 @@ namespace GitHubPrTool.Infrastructure.Services;
 /// </summary>
 public class ArchitectureAnalyzer : IArchitectureAnalyzer
 {
+    private const int MaxProjectFilesForAnalysis = 10;
+    private const int MaxFilesPerFolderForAnalysis = 20;
+    
     private readonly IAIService _aiService;
     private readonly ILogger<ArchitectureAnalyzer> _logger;
 
@@ -208,7 +212,7 @@ Focus on:
             // Get project files
             var projectFiles = Directory.GetFiles(repositoryPath, "*.csproj", SearchOption.AllDirectories)
                 .Concat(Directory.GetFiles(repositoryPath, "*.sln", SearchOption.AllDirectories))
-                .Take(10); // Limit for analysis
+                .Take(MaxProjectFilesForAnalysis); // Limit for analysis
 
             foreach (var file in projectFiles)
             {
@@ -224,7 +228,7 @@ Focus on:
                 if (Directory.Exists(folderPath))
                 {
                     var files = Directory.GetFiles(folderPath, "*.cs", SearchOption.AllDirectories)
-                        .Take(20) // Limit files for analysis
+                        .Take(MaxFilesPerFolderForAnalysis) // Limit files for analysis
                         .Select(f => Path.GetRelativePath(repositoryPath, f));
                     
                     structure.Add($"Folder {folder}: {string.Join(", ", files)}");
@@ -244,12 +248,6 @@ Focus on:
     {
         try
         {
-            var options = new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true,
-                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-            };
-
             // Try to parse as an array first
             try
             {
@@ -299,45 +297,18 @@ Focus on:
     {
         return new ArchitectureRecommendation
         {
-            Title = GetStringProperty(element, "title") ?? "Unknown",
-            Description = GetStringProperty(element, "description") ?? "",
-            Category = GetStringProperty(element, "category") ?? "General",
-            Priority = GetIntProperty(element, "priority") ?? 3,
-            Impact = GetStringProperty(element, "impact") ?? "",
-            Effort = GetStringProperty(element, "effort") ?? "",
-            AffectedFiles = GetStringArrayProperty(element, "affectedFiles"),
-            ImplementationSteps = GetStringArrayProperty(element, "implementationSteps"),
-            RelatedPatterns = GetStringArrayProperty(element, "relatedPatterns"),
-            CodeExample = GetStringProperty(element, "codeExample"),
-            References = GetStringArrayProperty(element, "references"),
+            Title = JsonParsingUtils.GetStringProperty(element, "title") ?? "Unknown",
+            Description = JsonParsingUtils.GetStringProperty(element, "description") ?? "",
+            Category = JsonParsingUtils.GetStringProperty(element, "category") ?? "General",
+            Priority = JsonParsingUtils.GetIntProperty(element, "priority") ?? 3,
+            Impact = JsonParsingUtils.GetStringProperty(element, "impact") ?? "",
+            Effort = JsonParsingUtils.GetStringProperty(element, "effort") ?? "",
+            AffectedFiles = JsonParsingUtils.GetStringArrayProperty(element, "affectedFiles"),
+            ImplementationSteps = JsonParsingUtils.GetStringArrayProperty(element, "implementationSteps"),
+            RelatedPatterns = JsonParsingUtils.GetStringArrayProperty(element, "relatedPatterns"),
+            CodeExample = JsonParsingUtils.GetStringProperty(element, "codeExample"),
+            References = JsonParsingUtils.GetStringArrayProperty(element, "references"),
             ModelVersion = _aiService.GetModelInfo()
         };
-    }
-
-    private static string? GetStringProperty(JsonElement element, string propertyName)
-    {
-        return element.TryGetProperty(propertyName, out var property) && property.ValueKind == JsonValueKind.String 
-            ? property.GetString() 
-            : null;
-    }
-
-    private static int? GetIntProperty(JsonElement element, string propertyName)
-    {
-        return element.TryGetProperty(propertyName, out var property) && property.ValueKind == JsonValueKind.Number 
-            ? property.GetInt32() 
-            : null;
-    }
-
-    private static List<string> GetStringArrayProperty(JsonElement element, string propertyName)
-    {
-        if (element.TryGetProperty(propertyName, out var property) && property.ValueKind == JsonValueKind.Array)
-        {
-            return property.EnumerateArray()
-                .Where(item => item.ValueKind == JsonValueKind.String)
-                .Select(item => item.GetString() ?? "")
-                .Where(s => !string.IsNullOrEmpty(s))
-                .ToList();
-        }
-        return new List<string>();
     }
 }

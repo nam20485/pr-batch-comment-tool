@@ -9,7 +9,9 @@ using System.Text;
 namespace GitHubPrTool.Infrastructure.Services;
 
 /// <summary>
-/// Gemini AI service implementation using REST API
+/// Mock Gemini AI service implementation for development and testing.
+/// This is a placeholder implementation that returns mock responses.
+/// In production, this would connect to the actual Gemini API.
 /// </summary>
 public class GeminiAIService : IAIService
 {
@@ -28,7 +30,7 @@ public class GeminiAIService : IAIService
     }
 
     /// <inheritdoc />
-    public async Task<string> GenerateTextAsync(
+    public Task<string> GenerateTextAsync(
         string prompt,
         string? systemInstructions = null,
         double temperature = 0.7,
@@ -38,7 +40,7 @@ public class GeminiAIService : IAIService
         if (!_config.Enabled)
         {
             _logger.LogWarning("AI service is disabled");
-            return string.Empty;
+            return Task.FromResult(string.Empty);
         }
 
         try
@@ -51,7 +53,7 @@ public class GeminiAIService : IAIService
             
             _logger.LogDebug("Generated mock text with length: {ResponseLength}", mockResponse.Length);
             
-            return mockResponse;
+            return Task.FromResult(mockResponse);
         }
         catch (Exception ex)
         {
@@ -96,19 +98,19 @@ public class GeminiAIService : IAIService
     }
 
     /// <inheritdoc />
-    public async Task<bool> IsAvailableAsync(CancellationToken cancellationToken = default)
+    public Task<bool> IsAvailableAsync(CancellationToken cancellationToken = default)
     {
         if (!_config.Enabled)
-            return false;
+            return Task.FromResult(false);
 
         try
         {
             // Simple health check - for mock implementation, always return true if enabled
-            return true;
+            return Task.FromResult(true);
         }
         catch
         {
-            return false;
+            return Task.FromResult(false);
         }
     }
 

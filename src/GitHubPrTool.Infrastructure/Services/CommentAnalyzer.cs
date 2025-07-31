@@ -1,5 +1,6 @@
 using GitHubPrTool.Core.Interfaces;
 using GitHubPrTool.Core.Models;
+using GitHubPrTool.Infrastructure.Utilities;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
 
@@ -10,6 +11,8 @@ namespace GitHubPrTool.Infrastructure.Services;
 /// </summary>
 public class CommentAnalyzer : ICommentAnalyzer
 {
+    private const int DefaultBatchSize = 5;
+    
     private readonly IAIService _aiService;
     private readonly ILogger<CommentAnalyzer> _logger;
 
@@ -88,12 +91,11 @@ Consider:
         var result = new Dictionary<long, CommentCategory>();
         
         // Process comments in batches to avoid overwhelming the AI service
-        const int batchSize = 5;
         var commentsList = comments.ToList();
         
-        for (int i = 0; i < commentsList.Count; i += batchSize)
+        for (int i = 0; i < commentsList.Count; i += DefaultBatchSize)
         {
-            var batch = commentsList.Skip(i).Take(batchSize);
+            var batch = commentsList.Skip(i).Take(DefaultBatchSize);
             var tasks = batch.Select(comment => 
                 CategorizeCommentWithId(comment, context, cancellationToken));
             
@@ -256,7 +258,7 @@ Focus on:
             using var document = JsonDocument.Parse(jsonResponse);
             var root = document.RootElement;
 
-            var categoryString = GetStringProperty(root, "category") ?? "General";
+            var categoryString = JsonParsingUtils.GetStringProperty(root, "category") ?? "General";
             var category = Enum.TryParse<CommentCategoryType>(categoryString, true, out var parsedCategory) 
                 ? parsedCategory 
                 : CommentCategoryType.General;
@@ -264,12 +266,12 @@ Focus on:
             return new CommentCategory
             {
                 Category = category,
-                SubCategory = GetStringProperty(root, "subCategory"),
-                Confidence = GetDoubleProperty(root, "confidence") ?? 0.5,
-                Priority = GetIntProperty(root, "priority") ?? 3,
-                Sentiment = GetDoubleProperty(root, "sentiment") ?? 0.0,
-                Complexity = GetIntProperty(root, "complexity") ?? 3,
-                Tags = GetStringArrayProperty(root, "tags"),
+                SubCategory = JsonParsingUtils.GetStringProperty(root, "subCategory"),
+                Confidence = JsonParsingUtils.GetDoubleProperty(root, "confidence") ?? 0.5,
+                Priority = JsonParsingUtils.GetIntProperty(root, "priority") ?? 3,
+                Sentiment = JsonParsingUtils.GetDoubleProperty(root, "sentiment") ?? 0.0,
+                Complexity = JsonParsingUtils.GetIntProperty(root, "complexity") ?? 3,
+                Tags = JsonParsingUtils.GetStringArrayProperty(root, "tags"),
                 ModelVersion = _aiService.GetModelInfo()
             };
         }
@@ -301,10 +303,10 @@ Focus on:
                 return root.EnumerateArray()
                     .Select(element => new AIInsight
                     {
-                        Type = GetStringProperty(element, "type") ?? "general",
-                        Content = GetStringProperty(element, "content") ?? "",
-                        Confidence = GetDoubleProperty(element, "confidence") ?? 0.5,
-                        Metadata = GetStringProperty(element, "metadata"),
+                        Type = JsonParsingUtils.GetStringProperty(element, "type") ?? "general",
+                        Content = JsonParsingUtils.GetStringProperty(element, "content") ?? "",
+                        Confidence = JsonParsingUtils.GetDoubleProperty(element, "confidence") ?? 0.5,
+                        Metadata = JsonParsingUtils.GetStringProperty(element, "metadata"),
                         ModelVersion = _aiService.GetModelInfo()
                     })
                     .ToList();
@@ -356,39 +358,5 @@ Focus on:
             _logger.LogWarning(ex, "Error parsing topics JSON: {Response}", jsonResponse);
             return new Dictionary<string, double>();
         }
-    }
-
-    private static string? GetStringProperty(JsonElement element, string propertyName)
-    {
-        return element.TryGetProperty(propertyName, out var property) && property.ValueKind == JsonValueKind.String 
-            ? property.GetString() 
-            : null;
-    }
-
-    private static int? GetIntProperty(JsonElement element, string propertyName)
-    {
-        return element.TryGetProperty(propertyName, out var property) && property.ValueKind == JsonValueKind.Number 
-            ? property.GetInt32() 
-            : null;
-    }
-
-    private static double? GetDoubleProperty(JsonElement element, string propertyName)
-    {
-        return element.TryGetProperty(propertyName, out var property) && property.ValueKind == JsonValueKind.Number 
-            ? property.GetDouble() 
-            : null;
-    }
-
-    private static List<string> GetStringArrayProperty(JsonElement element, string propertyName)
-    {
-        if (element.TryGetProperty(propertyName, out var property) && property.ValueKind == JsonValueKind.Array)
-        {
-            return property.EnumerateArray()
-                .Where(item => item.ValueKind == JsonValueKind.String)
-                .Select(item => item.GetString() ?? "")
-                .Where(s => !string.IsNullOrEmpty(s))
-                .ToList();
-        }
-        return new List<string>();
     }
 }
