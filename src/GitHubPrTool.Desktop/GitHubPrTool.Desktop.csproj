@@ -18,6 +18,34 @@
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <UseWinUI>false</UseWinUI>
+    <SelfContained>true</SelfContained>
+    
+    <!-- Application Identity -->
+    <ApplicationDisplayName>GitHub PR Review Tool</ApplicationDisplayName>
+    <ApplicationId>GitHubPrTool</ApplicationId>
+    <ApplicationIdGuid>12345678-1234-5678-9012-123456789012</ApplicationIdGuid>
+    <ApplicationPublisher>CN=GitHub PR Tool Developer</ApplicationPublisher>
+    <ApplicationPublisherDisplayName>GitHub PR Tool Team</ApplicationPublisherDisplayName>
+    <ApplicationVersion>1.0.0.0</ApplicationVersion>
+    
+    <!-- Package Information -->
+    <Product>GitHub PR Review Tool</Product>
+    <Description>A cross-platform desktop application for efficient GitHub Pull Request review workflows</Description>
+    <Copyright>Copyright © 2024 GitHub PR Tool Team</Copyright>
+    <Company>GitHub PR Tool Team</Company>
+    <AssemblyTitle>GitHub PR Review Tool</AssemblyTitle>
+  </PropertyGroup>
+
+  <!-- MSIX Packaging Properties -->
+  <PropertyGroup Condition="'$(Configuration)'=='Release' AND '$(RuntimeIdentifier)'=='win-x64'">
+    <WindowsPackageType>MSIX</WindowsPackageType>
+    <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
+    <GenerateAppInstallerFile>true</GenerateAppInstallerFile>
+    <AppxPackageSigningEnabled>false</AppxPackageSigningEnabled>
+    <AppxPackageDir>$(OutputPath)AppPackages\</AppxPackageDir>
+    <AppxBundlePlatforms>x64</AppxBundlePlatforms>
+    <AppxBundle>Always</AppxBundle>
   </PropertyGroup>
 
 </Project>

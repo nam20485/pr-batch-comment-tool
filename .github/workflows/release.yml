@@ -1,0 +1,260 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version (e.g., v1.0.0)'
+        required: true
+        type: string
+
+env:
+  DOTNET_VERSION: '8.0.x'
+  PROJECT_NAME: 'GitHubPrTool'
+
+jobs:
+  prepare:
+    name: Prepare Release
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      version_number: ${{ steps.version.outputs.version_number }}
+      
+    steps:
+    - name: Get version from tag or input
+      id: version
+      run: |
+        if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+          VERSION="${{ github.event.inputs.version }}"
+        else
+          VERSION="${GITHUB_REF#refs/tags/}"
+        fi
+        VERSION_NUMBER="${VERSION#v}"
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+        echo "version_number=$VERSION_NUMBER" >> $GITHUB_OUTPUT
+        echo "Release version: $VERSION"
+
+  test:
+    name: Test Before Release
+    runs-on: ubuntu-latest
+    needs: prepare
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+        
+    - name: Restore dependencies
+      run: dotnet restore
+      
+    - name: Build solution
+      run: dotnet build --configuration Release --no-restore
+      
+    - name: Run tests
+      run: dotnet test --configuration Release --no-build --verbosity normal
+
+  build-packages:
+    name: Build Release Packages
+    runs-on: ${{ matrix.os }}
+    needs: [prepare, test]
+    strategy:
+      matrix:
+        include:
+          - os: windows-latest
+            runtime: win-x64
+            artifact_name: windows
+            create_installer: true
+          - os: ubuntu-latest  
+            runtime: linux-x64
+            artifact_name: linux
+            create_installer: false
+          - os: macos-latest
+            runtime: osx-x64
+            artifact_name: macos
+            create_installer: false
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+        
+    - name: Restore dependencies
+      run: dotnet restore
+      
+    - name: Publish application
+      run: |
+        dotnet publish src/GitHubPrTool.Desktop/GitHubPrTool.Desktop.csproj \
+          --configuration Release \
+          --runtime ${{ matrix.runtime }} \
+          --self-contained true \
+          --output ./publish/${{ matrix.runtime }} \
+          /p:Version=${{ needs.prepare.outputs.version_number }} \
+          /p:AssemblyVersion=${{ needs.prepare.outputs.version_number }}.0 \
+          /p:FileVersion=${{ needs.prepare.outputs.version_number }}.0 \
+          /p:PublishSingleFile=true \
+          /p:PublishTrimmed=false
+    
+    - name: Create ZIP package
+      shell: bash
+      run: |
+        cd ./publish/${{ matrix.runtime }}
+        if [ "${{ runner.os }}" = "Windows" ]; then
+          7z a "../../${{ env.PROJECT_NAME }}-${{ needs.prepare.outputs.version_number }}-${{ matrix.runtime }}.zip" .
+        else
+          tar -czf "../../${{ env.PROJECT_NAME }}-${{ needs.prepare.outputs.version_number }}-${{ matrix.runtime }}.tar.gz" .
+        fi
+    
+    - name: Create MSIX package (Windows only)
+      if: matrix.create_installer == true
+      run: |
+        dotnet publish src/GitHubPrTool.Desktop/GitHubPrTool.Desktop.csproj \
+          --configuration Release \
+          --runtime win-x64 \
+          --self-contained true \
+          --output ./msix-build \
+          /p:Version=${{ needs.prepare.outputs.version_number }} \
+          /p:WindowsPackageType=MSIX \
+          /p:WindowsAppSDKSelfContained=true \
+          /p:GenerateAppInstallerFile=true \
+          /p:AppxPackageDir=./packages/ \
+          /p:AppxPackageSigningEnabled=false
+    
+    - name: Upload ZIP artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: package-${{ matrix.artifact_name }}
+        path: |
+          ${{ env.PROJECT_NAME }}-${{ needs.prepare.outputs.version_number }}-${{ matrix.runtime }}.*
+        retention-days: 30
+    
+    - name: Upload MSIX artifact (Windows only)
+      if: matrix.create_installer == true
+      uses: actions/upload-artifact@v4
+      with:
+        name: package-msix
+        path: |
+          ./packages/*.msix
+        retention-days: 30
+
+  create-release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    needs: [prepare, build-packages]
+    permissions:
+      contents: write
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Download all artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: ./artifacts
+        
+    - name: Generate release notes
+      id: release_notes
+      run: |
+        # Create release notes
+        cat > release_notes.md << 'EOF'
+        # GitHub PR Review Tool ${{ needs.prepare.outputs.version }}
+        
+        ## 🚀 What's New
+        
+        This release includes improvements to the GitHub PR Review Tool with enhanced performance, bug fixes, and new features.
+        
+        ## 📦 Downloads
+        
+        Choose the appropriate package for your platform:
+        
+        ### Windows
+        - **MSIX Package** (Recommended): Easy installation through Windows Package Manager
+        - **ZIP Archive**: Portable version, extract and run
+        
+        ### macOS
+        - **TAR.GZ Archive**: Extract and run the application
+        
+        ### Linux  
+        - **TAR.GZ Archive**: Extract and run the application
+        
+        ## 🛠️ Installation
+        
+        ### Windows (PowerShell)
+        ```powershell
+        irm https://raw.githubusercontent.com/nam20485/pr-batch-comment-tool/main/scripts/install.ps1 | iex
+        ```
+        
+        ### Manual Installation
+        1. Download the appropriate package for your platform
+        2. Extract the archive to your desired location
+        3. Run the application executable
+
+        ## 📋 System Requirements
+        
+        - **.NET 8.0 Runtime** (included in packages)
+        - **Windows 10/11**, **macOS 10.15+**, or **Linux** with GUI support
+        - **Internet connection** for GitHub API access
+        - **2GB RAM** minimum, 4GB recommended
+        
+        ## 🔗 Links
+        
+        - [Documentation](https://github.com/nam20485/pr-batch-comment-tool/wiki)
+        - [User Guide](https://github.com/nam20485/pr-batch-comment-tool/blob/main/docs/user-guide.md)
+        - [Developer Guide](https://github.com/nam20485/pr-batch-comment-tool/blob/main/docs/developer-guide.md)
+        - [Issue Tracker](https://github.com/nam20485/pr-batch-comment-tool/issues)
+        
+        ## 📝 Full Changelog
+        
+        See [CHANGELOG.md](https://github.com/nam20485/pr-batch-comment-tool/blob/main/docs/CHANGELOG.md) for detailed changes.
+        
+        ---
+        
+        **Full Changelog**: https://github.com/nam20485/pr-batch-comment-tool/compare/v${{ needs.prepare.outputs.version_number }}...HEAD
+        EOF
+        
+        echo "Generated release notes"
+        
+    - name: Organize release assets
+      run: |
+        mkdir -p ./release-assets
+        find ./artifacts -name "*.zip" -o -name "*.tar.gz" -o -name "*.msix" | while read file; do
+          cp "$file" ./release-assets/
+        done
+        ls -la ./release-assets/
+        
+    - name: Create Release
+      uses: softprops/action-gh-release@v2
+      with:
+        tag_name: ${{ needs.prepare.outputs.version }}
+        name: GitHub PR Review Tool ${{ needs.prepare.outputs.version }}
+        body_path: ./release_notes.md
+        files: |
+          ./release-assets/*
+        draft: false
+        prerelease: false
+        generate_release_notes: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  notify:
+    name: Post-Release Notifications  
+    runs-on: ubuntu-latest
+    needs: [prepare, create-release]
+    if: success()
+    
+    steps:
+    - name: Notify success
+      run: |
+        echo "✅ Release ${{ needs.prepare.outputs.version }} created successfully!"
+        echo "🔗 Release URL: https://github.com/nam20485/pr-batch-comment-tool/releases/tag/${{ needs.prepare.outputs.version }}"
