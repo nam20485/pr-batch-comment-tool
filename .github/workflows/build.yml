@@ -47,8 +47,6 @@ jobs:
         directory: ./coverage
         fail_ci_if_error: false
         verbose: true
-      env:
-        CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
   build:
     name: Build (${{ matrix.os }})
@@ -122,10 +120,18 @@ jobs:
     - name: Restore dependencies
       run: dotnet restore
       
-    - name: Run security scan
-      uses: securecodewarrior/github-action-add-sarif@v1
+    - name: Initialize CodeQL
+      uses: github/codeql-action/init@v3
       with:
-        sarif-file: 'security-scan-results.sarif'
+        languages: csharp
+        
+    - name: Build for security scan
+      run: dotnet build --configuration Release --no-restore
+      
+    - name: Run security scan
+      uses: github/codeql-action/analyze@v3
+      with:
+        category: "/language:csharp"
       continue-on-error: true
 
   lint:
