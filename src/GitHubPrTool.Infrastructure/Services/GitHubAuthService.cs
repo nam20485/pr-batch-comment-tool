@@ -91,10 +91,18 @@ public class GitHubAuthService : IAuthService
                 return false;
             }
 
-            await SetAccessTokenAsync(token.AccessToken, cancellationToken);
+            var success = await SetAccessTokenAsync(token.AccessToken, cancellationToken);
             
-            _logger.LogInformation("GitHub authentication completed successfully");
-            return true;
+            if (success)
+            {
+                _logger.LogInformation("GitHub authentication completed successfully");
+                return true;
+            }
+            else
+            {
+                _logger.LogWarning("Failed to set access token");
+                return false;
+            }
         }
         catch (AuthorizationException)
         {
@@ -162,6 +170,12 @@ public class GitHubAuthService : IAuthService
             await SignOutAsync(cancellationToken);
             return false;
         }
+        catch (NotFoundException)
+        {
+            _logger.LogWarning("User not found - access token may be invalid or user account may no longer exist");
+            await SignOutAsync(cancellationToken);
+            return false;
+        }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error refreshing token");
@@ -182,7 +196,13 @@ public class GitHubAuthService : IAuthService
                 return false;
             }
 
-            await SetAccessTokenAsync(accessToken, cancellationToken);
+            var success = await SetAccessTokenAsync(accessToken, cancellationToken);
+            
+            if (!success)
+            {
+                _logger.LogWarning("Failed to set access token - token may be invalid");
+                return false;
+            }
             
             // Validate the token by making a test API call
             if (await RefreshTokenAsync(cancellationToken))
@@ -200,20 +220,48 @@ public class GitHubAuthService : IAuthService
         }
     }
 
-    private async Task SetAccessTokenAsync(string accessToken, CancellationToken cancellationToken)
+    private async Task<bool> SetAccessTokenAsync(string accessToken, CancellationToken cancellationToken)
     {
-        _accessToken = accessToken;
-        _gitHubClient.Connection.Credentials = new Credentials(accessToken);
+        try
+        {
+            _accessToken = accessToken;
+            _gitHubClient.Connection.Credentials = new Credentials(accessToken);
 
-        // Get current user information
-        var octokitUser = await _gitHubClient.User.Current();
-        _currentUser = MapToUser(octokitUser);
+            // Get current user information
+            var octokitUser = await _gitHubClient.User.Current();
+            _currentUser = MapToUser(octokitUser);
 
-        // Store encrypted token and user information using secure storage
-        await _tokenStorage.StoreTokenAsync("github_access_token", accessToken, cancellationToken);
-        await _cacheService.SetAsync("github_current_user", _currentUser, TimeSpan.FromDays(1), cancellationToken);
+            // Store encrypted token and user information using secure storage
+            await _tokenStorage.StoreTokenAsync("github_access_token", accessToken, cancellationToken);
+            await _cacheService.SetAsync("github_current_user", _currentUser, TimeSpan.FromDays(1), cancellationToken);
 
-        AuthenticationChanged?.Invoke(this, true);
+            AuthenticationChanged?.Invoke(this, true);
+            return true;
+        }
+        catch (AuthorizationException)
+        {
+            _logger.LogWarning("Access token is invalid");
+            _accessToken = null;
+            _currentUser = null;
+            _gitHubClient.Connection.Credentials = Credentials.Anonymous;
+            return false;
+        }
+        catch (NotFoundException)
+        {
+            _logger.LogWarning("User not found - access token may be invalid or user account may no longer exist");
+            _accessToken = null;
+            _currentUser = null;
+            _gitHubClient.Connection.Credentials = Credentials.Anonymous;
+            return false;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error setting access token");
+            _accessToken = null;
+            _currentUser = null;
+            _gitHubClient.Connection.Credentials = Credentials.Anonymous;
+            return false;
+        }
     }
 
     private static Core.Models.User MapToUser(Octokit.User octokitUser)
