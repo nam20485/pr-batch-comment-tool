@@ -82,6 +82,11 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
     public GlobalSearchViewModel? GlobalSearchViewModel { get; private set; }
 
     /// <summary>
+    /// Task that completes when the async initialization is finished.
+    /// </summary>
+    public Task InitializationTask { get; private set; }
+
+    /// <summary>
     /// Initializes a new instance of the MainWindowViewModel.
     /// </summary>
     /// <param name="authService">GitHub authentication service.</param>
@@ -127,7 +132,7 @@ public partial class MainWindowViewModel : ObservableObject, IDisposable
         _networkConnectivityService.ConnectivityChanged += OnConnectivityChanged;
         
         // Initialize authentication status
-        _ = Task.Run(async () => await UpdateAuthenticationStatusAsync());
+        InitializationTask = Task.Run(async () => await UpdateAuthenticationStatusAsync());
         
         // Initialize connectivity monitoring
         _networkConnectivityService.StartMonitoring();

@@ -24,6 +24,10 @@ public class MainWindowViewModelTests
         _mockNetworkConnectivityService = new Mock<INetworkConnectivityService>();
         _mockLogger = new Mock<ILogger<MainWindowViewModel>>();
         
+        // Setup auth service to return not authenticated by default
+        _mockAuthService.Setup(x => x.IsAuthenticated).Returns(false);
+        _mockAuthService.Setup(x => x.LoadAuthenticationAsync(It.IsAny<CancellationToken>())).ReturnsAsync(false);
+        
         // Create mocks for the ViewModels
         var mockGitHubRepo = new Mock<IGitHubRepository>();
         var mockSearchService = new Mock<ISearchService>();
@@ -73,11 +77,13 @@ public class MainWindowViewModelTests
     }
 
     [Fact]
-    public void Constructor_ShouldInitializeWithDefaultValues()
+    public async Task Constructor_ShouldInitializeWithDefaultValues()
     {
         // Arrange & Act - constructor called in setup
+        // Wait for the async initialization to complete
+        await _viewModel.InitializationTask;
 
-        // Assert - These values are set after UpdateAuthenticationStatus is called
+        // Assert - Values after initialization completes
         _viewModel.ConnectionStatus.Should().Be("Offline");
         _viewModel.CurrentUser.Should().BeNull();
         _viewModel.IsAuthenticated.Should().BeFalse();
