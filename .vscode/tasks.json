@@ -4,12 +4,12 @@
 		{
 			"type": "dotnet",
 			"task": "build e:\\src\\github\\nam20485\\pr-batch-comment-tool\\src\\GitHubPrTool.Desktop\\GitHubPrTool.Desktop.csproj",
-			"file": "e:\\src\\github\\nam20485\\pr-batch-comment-tool\\src\\GitHubPrTool.Desktop\\GitHubPrTool.Desktop.csproj",
+			"file": "${workspaceFolder}\\src\\GitHubPrTool.Desktop\\GitHubPrTool.Desktop.csproj",
 			"group": {
 				"kind": "build"
-			},
+			},			
 			"problemMatcher": [],
-			"label": "dotnet: build e:\\src\\github\\nam20485\\pr-batch-comment-tool\\src\\GitHubPrTool.Desktop\\GitHubPrTool.Desktop.csproj"
+			"label": "dotnet: build ${workspaceFolder}\\src\\GitHubPrTool.Desktop\\GitHubPrTool.Desktop.csproj"
 		},
 		{
 			"type": "dotnet",
