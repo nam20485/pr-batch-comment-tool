@@ -171,8 +171,7 @@ function Create-ZipPackage {
     Write-BuildLog "Creating ZIP package: $packageName"
     
     try {
-        Add-Type -AssemblyName System.IO.Compression.FileSystem
-        [System.IO.Compression.ZipFile]::CreateFromDirectory($SourceDir, $packagePath)
+        Compress-Archive -Path (Join-Path $SourceDir '*') -DestinationPath $packagePath -Force
         
         $packageSize = (Get-Item $packagePath).Length / 1MB
         Write-BuildLog "ZIP package created: $packageName ($('{0:N2}' -f $packageSize) MB)" "SUCCESS"
