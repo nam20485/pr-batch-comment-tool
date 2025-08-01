@@ -8,6 +8,8 @@ namespace GitHubPrTool.TestUtilities.Scenarios;
 /// </summary>
 public static class TestScenarios
 {
+    // Use a seeded random for reproducible test results
+    private static readonly Random _random = new Random(42);
     /// <summary>
     /// Create a small-scale scenario (suitable for unit tests)
     /// </summary>
@@ -112,17 +114,17 @@ public static class TestScenarios
             pr.Repository = repository;
 
             // Add comments to PR
-            var comments = CommentDataBuilder.CreateManyForPullRequest(pr.Id, Random.Shared.Next(1, 15));
+            var comments = CommentDataBuilder.CreateManyForPullRequest(pr.Id, _random.Next(1, 15));
             pr.Comments = comments.ToList();
 
             // Add reviews to PR
-            var reviews = ReviewDataBuilder.CreateManyForPullRequest(pr.Id, Random.Shared.Next(1, 5));
+            var reviews = ReviewDataBuilder.CreateManyForPullRequest(pr.Id, _random.Next(1, 5));
             pr.Reviews = reviews.ToList();
 
             // Add review comments
             foreach (var review in reviews)
             {
-                var reviewComments = CommentDataBuilder.CreateManyForPullRequest(pr.Id, Random.Shared.Next(0, 3))
+                var reviewComments = CommentDataBuilder.CreateManyForPullRequest(pr.Id, _random.Next(0, 3))
                     .Select(c => { c.ReviewId = review.Id; c.Review = review; c.Type = CommentType.Review; return c; })
                     .ToList();
                 review.Comments = reviewComments;
@@ -151,11 +153,11 @@ public static class TestScenarios
             pr.Repository = repository;
 
             // High volume of comments per PR
-            var comments = CommentDataBuilder.CreateManyForPullRequest(pr.Id, Random.Shared.Next(50, 200));
+            var comments = CommentDataBuilder.CreateManyForPullRequest(pr.Id, _random.Next(50, 200));
             pr.Comments = comments.ToList();
 
             // Many reviews per PR
-            var reviews = ReviewDataBuilder.CreateManyForPullRequest(pr.Id, Random.Shared.Next(10, 25));
+            var reviews = ReviewDataBuilder.CreateManyForPullRequest(pr.Id, _random.Next(10, 25));
             pr.Reviews = reviews.ToList();
 
             pullRequests.Add(pr);

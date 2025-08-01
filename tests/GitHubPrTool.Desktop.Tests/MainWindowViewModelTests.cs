@@ -80,8 +80,8 @@ public class MainWindowViewModelTests
     public async Task Constructor_ShouldInitializeWithDefaultValues()
     {
         // Arrange & Act - constructor called in setup
-        // Wait a moment for the async initialization to complete
-        await Task.Delay(100);
+        // Wait for the async initialization to complete
+        await _viewModel.InitializationTask;
 
         // Assert - Values after initialization completes
         _viewModel.ConnectionStatus.Should().Be("Offline");
