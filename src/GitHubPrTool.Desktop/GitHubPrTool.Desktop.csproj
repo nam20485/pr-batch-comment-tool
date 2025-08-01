@@ -24,7 +24,7 @@
     <!-- Application Identity -->
     <ApplicationDisplayName>GitHub PR Review Tool</ApplicationDisplayName>
     <ApplicationId>GitHubPrTool</ApplicationId>
-    <ApplicationIdGuid>12345678-1234-5678-9012-123456789012</ApplicationIdGuid>
+    <ApplicationIdGuid>e3a2c7b1-4f8a-4b2e-9c3d-8f7e2a1b6c4d</ApplicationIdGuid>
     <ApplicationPublisher>CN=GitHub PR Tool Developer</ApplicationPublisher>
     <ApplicationPublisherDisplayName>GitHub PR Tool Team</ApplicationPublisherDisplayName>
     <ApplicationVersion>1.0.0.0</ApplicationVersion>
