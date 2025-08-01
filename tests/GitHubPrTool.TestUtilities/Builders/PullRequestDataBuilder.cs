@@ -49,7 +49,8 @@ public static class PullRequestDataBuilder
     /// </summary>
     public static IList<PullRequest> CreateManyForRepository(long repositoryId, int count = 3)
     {
-        return _faker.RuleFor(pr => pr.RepositoryId, repositoryId)
+        return _faker.Clone()
+                     .RuleFor(pr => pr.RepositoryId, repositoryId)
                      .RuleFor(pr => pr.Repository, new Repository { Id = repositoryId })
                      .Generate(count);
     }
@@ -57,17 +58,17 @@ public static class PullRequestDataBuilder
     /// <summary>
     /// Create an open PullRequest
     /// </summary>
-    public static PullRequest CreateOpen() => _faker.RuleFor(pr => pr.State, PullRequestState.Open).Generate();
+    public static PullRequest CreateOpen() => _faker.Clone().RuleFor(pr => pr.State, PullRequestState.Open).Generate();
 
     /// <summary>
     /// Create a closed PullRequest
     /// </summary>
-    public static PullRequest CreateClosed() => _faker.RuleFor(pr => pr.State, PullRequestState.Closed).Generate();
+    public static PullRequest CreateClosed() => _faker.Clone().RuleFor(pr => pr.State, PullRequestState.Closed).Generate();
 
     /// <summary>
     /// Create a merged PullRequest
     /// </summary>
-    public static PullRequest CreateMerged() => _faker
+    public static PullRequest CreateMerged() => _faker.Clone()
         .RuleFor(pr => pr.State, PullRequestState.Merged)
         .RuleFor(pr => pr.MergedAt, f => f.Date.RecentOffset())
         .RuleFor(pr => pr.MergedBy, f => UserDataBuilder.CreateMinimal())
@@ -76,17 +77,17 @@ public static class PullRequestDataBuilder
     /// <summary>
     /// Create a draft PullRequest
     /// </summary>
-    public static PullRequest CreateDraft() => _faker.RuleFor(pr => pr.IsDraft, true).Generate();
+    public static PullRequest CreateDraft() => _faker.Clone().RuleFor(pr => pr.IsDraft, true).Generate();
 
     /// <summary>
     /// Create a PullRequest with specific title
     /// </summary>
-    public static PullRequest WithTitle(string title) => _faker.RuleFor(pr => pr.Title, title).Generate();
+    public static PullRequest WithTitle(string title) => _faker.Clone().RuleFor(pr => pr.Title, title).Generate();
 
     /// <summary>
     /// Create a PullRequest with specific author
     /// </summary>
-    public static PullRequest WithAuthor(User author) => _faker.RuleFor(pr => pr.Author, author).Generate();
+    public static PullRequest WithAuthor(User author) => _faker.Clone().RuleFor(pr => pr.Author, author).Generate();
 
     /// <summary>
     /// Create a PullRequest with comments

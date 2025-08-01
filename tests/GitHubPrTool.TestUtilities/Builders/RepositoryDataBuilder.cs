@@ -40,27 +40,27 @@ public static class RepositoryDataBuilder
     /// <summary>
     /// Create a Repository with specific name
     /// </summary>
-    public static Repository WithName(string name) => _faker.RuleFor(r => r.Name, name).Generate();
+    public static Repository WithName(string name) => _faker.Clone().RuleFor(r => r.Name, name).Generate();
 
     /// <summary>
     /// Create a Repository with specific owner
     /// </summary>
-    public static Repository WithOwner(User owner) => _faker.RuleFor(r => r.Owner, owner).Generate();
+    public static Repository WithOwner(User owner) => _faker.Clone().RuleFor(r => r.Owner, owner).Generate();
 
     /// <summary>
     /// Create a public Repository
     /// </summary>
-    public static Repository CreatePublic() => _faker.RuleFor(r => r.Private, false).Generate();
+    public static Repository CreatePublic() => _faker.Clone().RuleFor(r => r.Private, false).Generate();
 
     /// <summary>
     /// Create a private Repository
     /// </summary>
-    public static Repository CreatePrivate() => _faker.RuleFor(r => r.Private, true).Generate();
+    public static Repository CreatePrivate() => _faker.Clone().RuleFor(r => r.Private, true).Generate();
 
     /// <summary>
     /// Create a Repository with specific language
     /// </summary>
-    public static Repository WithLanguage(string language) => _faker.RuleFor(r => r.Language, language).Generate();
+    public static Repository WithLanguage(string language) => _faker.Clone().RuleFor(r => r.Language, language).Generate();
 
     /// <summary>
     /// Create a Repository with Pull Requests

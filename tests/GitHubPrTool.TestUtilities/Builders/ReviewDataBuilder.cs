@@ -38,7 +38,8 @@ public static class ReviewDataBuilder
     /// </summary>
     public static IList<Review> CreateManyForPullRequest(long pullRequestId, int count = 3)
     {
-        return _faker.RuleFor(r => r.PullRequestId, pullRequestId)
+        return _faker.Clone()
+                     .RuleFor(r => r.PullRequestId, pullRequestId)
                      .RuleFor(r => r.PullRequest, new PullRequest { Id = pullRequestId })
                      .Generate(count);
     }
@@ -46,32 +47,32 @@ public static class ReviewDataBuilder
     /// <summary>
     /// Create an approved Review
     /// </summary>
-    public static Review CreateApproved() => _faker.RuleFor(r => r.State, ReviewState.Approved).Generate();
+    public static Review CreateApproved() => _faker.Clone().RuleFor(r => r.State, ReviewState.Approved).Generate();
 
     /// <summary>
     /// Create a Review requesting changes
     /// </summary>
-    public static Review CreateChangesRequested() => _faker.RuleFor(r => r.State, ReviewState.ChangesRequested).Generate();
+    public static Review CreateChangesRequested() => _faker.Clone().RuleFor(r => r.State, ReviewState.ChangesRequested).Generate();
 
     /// <summary>
     /// Create a pending Review
     /// </summary>
-    public static Review CreatePending() => _faker.RuleFor(r => r.State, ReviewState.Pending).Generate();
+    public static Review CreatePending() => _faker.Clone().RuleFor(r => r.State, ReviewState.Pending).Generate();
 
     /// <summary>
     /// Create a commented Review
     /// </summary>
-    public static Review CreateCommented() => _faker.RuleFor(r => r.State, ReviewState.Commented).Generate();
+    public static Review CreateCommented() => _faker.Clone().RuleFor(r => r.State, ReviewState.Commented).Generate();
 
     /// <summary>
     /// Create a Review from specific reviewer
     /// </summary>
-    public static Review FromReviewer(User reviewer) => _faker.RuleFor(r => r.Author, reviewer).Generate();
+    public static Review FromReviewer(User reviewer) => _faker.Clone().RuleFor(r => r.Author, reviewer).Generate();
 
     /// <summary>
     /// Create a Review with specific body text
     /// </summary>
-    public static Review WithBody(string body) => _faker.RuleFor(r => r.Body, body).Generate();
+    public static Review WithBody(string body) => _faker.Clone().RuleFor(r => r.Body, body).Generate();
 
     /// <summary>
     /// Create a Review with Comments
@@ -93,15 +94,18 @@ public static class ReviewDataBuilder
     {
         return new List<Review>
         {
-            _faker.RuleFor(r => r.PullRequestId, pullRequestId)
+            _faker.Clone()
+                  .RuleFor(r => r.PullRequestId, pullRequestId)
                   .RuleFor(r => r.State, ReviewState.ChangesRequested)
                   .RuleFor(r => r.SubmittedAt, DateTimeOffset.Now.AddDays(-3))
                   .Generate(),
-            _faker.RuleFor(r => r.PullRequestId, pullRequestId)
+            _faker.Clone()
+                  .RuleFor(r => r.PullRequestId, pullRequestId)
                   .RuleFor(r => r.State, ReviewState.Commented)
                   .RuleFor(r => r.SubmittedAt, DateTimeOffset.Now.AddDays(-2))
                   .Generate(),
-            _faker.RuleFor(r => r.PullRequestId, pullRequestId)
+            _faker.Clone()
+                  .RuleFor(r => r.PullRequestId, pullRequestId)
                   .RuleFor(r => r.State, ReviewState.Approved)
                   .RuleFor(r => r.SubmittedAt, DateTimeOffset.Now.AddDays(-1))
                   .Generate()

@@ -50,7 +50,8 @@ public static class CommentDataBuilder
     /// </summary>
     public static IList<Comment> CreateManyForPullRequest(long pullRequestId, int count = 3)
     {
-        return _faker.RuleFor(c => c.PullRequestId, pullRequestId)
+        return _faker.Clone()
+                     .RuleFor(c => c.PullRequestId, pullRequestId)
                      .RuleFor(c => c.PullRequest, new PullRequest { Id = pullRequestId })
                      .Generate(count);
     }
@@ -58,7 +59,7 @@ public static class CommentDataBuilder
     /// <summary>
     /// Create an Issue comment
     /// </summary>
-    public static Comment CreateIssueComment() => _faker
+    public static Comment CreateIssueComment() => _faker.Clone()
         .RuleFor(c => c.Type, CommentType.Issue)
         .RuleFor(c => c.Path, (string?)null)
         .RuleFor(c => c.Line, (int?)null)
@@ -68,7 +69,7 @@ public static class CommentDataBuilder
     /// <summary>
     /// Create a Review comment
     /// </summary>
-    public static Comment CreateReviewComment() => _faker
+    public static Comment CreateReviewComment() => _faker.Clone()
         .RuleFor(c => c.Type, CommentType.Review)
         .RuleFor(c => c.Path, f => f.System.FilePath())
         .RuleFor(c => c.Line, f => f.Random.Int(1, 1000))
@@ -78,7 +79,7 @@ public static class CommentDataBuilder
     /// <summary>
     /// Create a Commit comment
     /// </summary>
-    public static Comment CreateCommitComment() => _faker
+    public static Comment CreateCommitComment() => _faker.Clone()
         .RuleFor(c => c.Type, CommentType.Commit)
         .RuleFor(c => c.CommitId, f => f.Random.Hash(40))
         .RuleFor(c => c.Path, f => f.System.FilePath())
@@ -87,12 +88,12 @@ public static class CommentDataBuilder
     /// <summary>
     /// Create a Comment with specific body text
     /// </summary>
-    public static Comment WithBody(string body) => _faker.RuleFor(c => c.Body, body).Generate();
+    public static Comment WithBody(string body) => _faker.Clone().RuleFor(c => c.Body, body).Generate();
 
     /// <summary>
     /// Create a Comment from specific author
     /// </summary>
-    public static Comment FromAuthor(User author) => _faker.RuleFor(c => c.Author, author).Generate();
+    public static Comment FromAuthor(User author) => _faker.Clone().RuleFor(c => c.Author, author).Generate();
 
     /// <summary>
     /// Create Comments with replies (threaded conversation)
@@ -100,7 +101,8 @@ public static class CommentDataBuilder
     public static Comment WithReplies(int replyCount = 2)
     {
         var parentComment = _faker.Generate();
-        var replies = _faker.RuleFor(c => c.InReplyToId, parentComment.Id)
+        var replies = _faker.Clone()
+                            .RuleFor(c => c.InReplyToId, parentComment.Id)
                             .RuleFor(c => c.InReplyTo, parentComment)
                             .Generate(replyCount);
         
@@ -121,7 +123,8 @@ public static class CommentDataBuilder
     /// </summary>
     public static IList<Comment> CreateInDateRange(DateTimeOffset startDate, DateTimeOffset endDate, int count = 10)
     {
-        return _faker.RuleFor(c => c.CreatedAt, f => f.Date.BetweenOffset(startDate, endDate))
+        return _faker.Clone()
+                     .RuleFor(c => c.CreatedAt, f => f.Date.BetweenOffset(startDate, endDate))
                      .Generate(count);
     }
 
@@ -130,7 +133,8 @@ public static class CommentDataBuilder
     /// </summary>
     public static IList<Comment> WithBodyContaining(string searchText, int count = 5)
     {
-        return _faker.RuleFor(c => c.Body, f => $"{f.Lorem.Sentence()} {searchText} {f.Lorem.Sentence()}")
+        return _faker.Clone()
+                     .RuleFor(c => c.Body, f => $"{f.Lorem.Sentence()} {searchText} {f.Lorem.Sentence()}")
                      .Generate(count);
     }
 }

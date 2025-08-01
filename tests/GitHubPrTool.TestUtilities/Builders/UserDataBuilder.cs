@@ -32,19 +32,23 @@ public static class UserDataBuilder
     /// <summary>
     /// Create a User with specific login
     /// </summary>
-    public static User WithLogin(string login) => _faker.RuleFor(u => u.Login, login).Generate();
+    public static User WithLogin(string login) => _faker.Clone().RuleFor(u => u.Login, login).Generate();
 
     /// <summary>
     /// Create a User with specific ID
     /// </summary>
-    public static User WithId(long id) => _faker.RuleFor(u => u.Id, id).Generate();
+    public static User WithId(long id) => _faker.Clone().RuleFor(u => u.Id, id).Generate();
 
     /// <summary>
     /// Create a minimal User (only ID and Login)
     /// </summary>
-    public static User CreateMinimal() => new User
+    public static User CreateMinimal()
     {
-        Id = new Faker().Random.Long(1, 1000000),
-        Login = new Faker().Internet.UserName()
-    };
+        var faker = new Faker();
+        return new User
+        {
+            Id = faker.Random.Long(1, 1000000),
+            Login = faker.Internet.UserName()
+        };
+    }
 }
