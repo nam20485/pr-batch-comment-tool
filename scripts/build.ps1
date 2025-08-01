@@ -171,8 +171,7 @@ function Create-ZipPackage {
     Write-BuildLog "Creating ZIP package: $packageName"
     
     try {
-        Add-Type -AssemblyName System.IO.Compression.FileSystem
-        [System.IO.Compression.ZipFile]::CreateFromDirectory($SourceDir, $packagePath)
+        Compress-Archive -Path "$SourceDir\*" -DestinationPath $packagePath -Force
         
         $packageSize = (Get-Item $packagePath).Length / 1MB
         Write-BuildLog "ZIP package created: $packageName ($('{0:N2}' -f $packageSize) MB)" "SUCCESS"
@@ -181,6 +180,44 @@ function Create-ZipPackage {
     }
     catch {
         Write-BuildLog "Failed to create ZIP package: $($_.Exception.Message)" "ERROR"
+        throw
+    }
+}
+
+function Create-TarGzPackage {
+    param([string]$Platform, [string]$SourceDir)
+    
+    $packageName = "GitHubPrTool-$Version-$Platform.tar.gz"
+    $packagePath = Join-Path $PackageOutputDir $packageName
+    
+    Write-BuildLog "Creating TAR.GZ package: $packageName"
+    
+    try {
+        # Use tar command which is available on Windows 10/11, macOS, and Linux
+        $tarCommand = "tar"
+        if (-not (Get-Command $tarCommand -ErrorAction SilentlyContinue)) {
+            throw "tar command not found. Please ensure tar is available in PATH."
+        }
+        
+        # Create tar.gz archive
+        Push-Location $SourceDir
+        try {
+            & $tarCommand -czf $packagePath *
+            if ($LASTEXITCODE -ne 0) {
+                throw "tar command failed with exit code $LASTEXITCODE"
+            }
+        }
+        finally {
+            Pop-Location
+        }
+        
+        $packageSize = (Get-Item $packagePath).Length / 1MB
+        Write-BuildLog "TAR.GZ package created: $packageName ($('{0:N2}' -f $packageSize) MB)" "SUCCESS"
+        
+        return $packagePath
+    }
+    catch {
+        Write-BuildLog "Failed to create TAR.GZ package: $($_.Exception.Message)" "ERROR"
         throw
     }
 }
@@ -366,12 +403,13 @@ try {
             $sourceDir = Join-Path $BuildOutputDir $platform
             
             if (Test-Path $sourceDir) {
-                # Create ZIP package for all platforms
-                $zipPackage = Create-ZipPackage $platform $sourceDir
-                Sign-Package $zipPackage
-                
-                # Create MSIX package for Windows
+                # Create appropriate package format based on platform
                 if ($platform -eq "win-x64") {
+                    # Create ZIP package for Windows
+                    $zipPackage = Create-ZipPackage $platform $sourceDir
+                    Sign-Package $zipPackage
+                    
+                    # Create MSIX package for Windows
                     try {
                         $msixPackage = Create-MSIXPackage $sourceDir
                         Sign-Package $msixPackage
@@ -379,6 +417,11 @@ try {
                     catch {
                         Write-BuildLog "MSIX package creation failed, but ZIP package is available" "WARN"
                     }
+                }
+                else {
+                    # Create TAR.GZ package for macOS and Linux
+                    $tarGzPackage = Create-TarGzPackage $platform $sourceDir
+                    Sign-Package $tarGzPackage
                 }
             }
         }

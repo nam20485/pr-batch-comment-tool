@@ -29,8 +29,8 @@ A cross-platform desktop application built with Avalonia UI that streamlines Git
 1. Go to the [Releases](https://github.com/nam20485/pr-batch-comment-tool/releases) page
 2. Download the latest version for your platform:
    - **Windows**: `GitHubPrTool-win-x64.msix` or `GitHubPrTool-win-x64.zip`
-   - **macOS**: `GitHubPrTool-osx-x64.dmg` or `GitHubPrTool-osx-x64.tar.gz`
-   - **Linux**: `GitHubPrTool-linux-x64.AppImage` or `GitHubPrTool-linux-x64.tar.gz`
+   - **macOS**: `GitHubPrTool-osx-x64.tar.gz`
+   - **Linux**: `GitHubPrTool-linux-x64.tar.gz`
 
 ### Option 2: Install via PowerShell (Windows)
 

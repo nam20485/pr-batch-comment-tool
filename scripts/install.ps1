@@ -149,8 +149,7 @@ function Install-ZipPackage {
         }
         
         # Extract archive
-        Add-Type -AssemblyName System.IO.Compression.FileSystem
-        [System.IO.Compression.ZipFile]::ExtractToDirectory($ZipPath, $InstallPath)
+        Expand-Archive -Path $ZipPath -DestinationPath $InstallPath -Force
         
         Write-ColorOutput "Application extracted successfully!" "Success"
         return $true

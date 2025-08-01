@@ -373,7 +373,7 @@ create_desktop_entry() {
 Name=GitHub PR Review Tool
 Comment=Streamline GitHub Pull Request reviews with batch comment operations
 Exec=$BIN_DIR/githubprtool
-Icon=applications-development
+Icon=$INSTALL_DIR/assets/githubprtool.png
 Terminal=false
 Type=Application
 Categories=Development;

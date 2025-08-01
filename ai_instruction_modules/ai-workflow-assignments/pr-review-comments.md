@@ -2,6 +2,15 @@
 
 ## (pr-review-comments)
 
+### 🚨 CRITICAL REMINDER - INDIVIDUAL REPLIES REQUIRED 🚨
+
+**YOU MUST REPLY TO EACH REVIEW COMMENT INDIVIDUALLY!**
+
+- **NEVER** post one general PR comment
+- **ALWAYS** reply to each individual review comment using the GitHub API
+- Each comment gets its own separate reply using: `gh api -X POST repos/owner/repo/pulls/number/comments/{comment_id}/replies`
+- This is a FUNDAMENTAL requirement - individual comment engagement is MANDATORY
+
 ### Goal
 
 Resolve **ALL (100%)** PR comments and get the PR approved. You must ensure that every comment is addressed thoroughly.
@@ -34,15 +43,24 @@ It is important to the final quality of our product for everyone to perform thei
     - create a plan to resolve the comment
     - make the code changes
     - commit the code changes (reference the PR & comment)
-    - leave a reply to the comment explaining how you resolved it
+    - **leave a reply to THAT SPECIFIC comment explaining how you resolved it** 
     - marked it resolved.
 Once finished, you will leave a comment on the PR summarizing the changes made and the comments resolved.
 
 **AFTER FINISHING THE FIX FOR EACH COMMENT, DO NOT FORGET TO COMMIT YOUR CHANGE, REPLY TO EACH WITH A COMMENT DESCRIBING YOUR FIX, AND THEN MARKING IT RESOLVED!**
 
+**🚨 REMINDER: EACH COMMENT GETS ITS OWN INDIVIDUAL REPLY - NO GENERAL COMMENTS! 🚨**
+
 ### Technical Implementation: Individual Review Comment Replies
 
+**🚨 CRITICAL WARNING: INDIVIDUAL REPLIES ONLY! 🚨**
+
+**YOU MUST REPLY TO EACH REVIEW COMMENT INDIVIDUALLY - NOT ONE GENERAL COMMENT!**
+
 **CRITICAL**: You must reply to **INDIVIDUAL REVIEW COMMENTS** using the specific GitHub API endpoint, not add general comments to the PR thread.
+
+**WRONG APPROACH**: Posting one general comment explaining all fixes ❌
+**CORRECT APPROACH**: Individual reply to each specific review comment ✅
 
 #### Correct Method - Individual Comment Replies
 
