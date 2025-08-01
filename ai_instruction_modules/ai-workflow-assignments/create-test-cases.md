@@ -35,9 +35,10 @@ You will create test coverage reports as part of the build or automated test cas
 
 1. Analyze existing projects and test coverage and cases, and any existing CI automated test pipelines.
 2. Create an issue documenting your plan.
-3. Ask for approval for your plan. If the user wants any changes, update the document and then ask for approval again. You will iterate making changes until you have achieved your plan goals.
+3. Ask for approval for your plan. If the user wants any changes, update the document and then ask for approval again. You will iterate making changes until you receive approval.
 
-** You will not make any changes until approval is obtained.**
+**You will not make any changes until approval is obtained.**
+
 4. Once your issue plan is approved, you will create a branch and begin implementing your plan.
 
 **Always follow instructions given here (generally) and specifically as described in the task-based workflow process.**
@@ -49,20 +50,20 @@ It is important to the final quality of our product for everyone to perform thei
 Your other instructions modules describe your software and libraries you will use.
 
 
-** For C#
+### For C#
 * xUnit
 * Moq
 * Bunit
 * Fluent Assertions
 * Test Coverage Visualization NuGet packages like Coverlet or integrated Visual Studio functionality.
 
-** Powershell
+### Powershell
 * Pester
 
-** Docker
+### Docker
 * The best Docker testing frameworks you can find.
 
-** C++
+### C++
 * Catch2
 
 ### Completion
