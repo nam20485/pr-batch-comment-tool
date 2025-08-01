@@ -414,8 +414,7 @@ Any other relevant information, logs, or screenshots
 ### Emergency Contact
 
 For critical security issues:
-- Email: [security contact if available]
-- Use GitHub's private vulnerability reporting
+- Use GitHub's private vulnerability reporting at: https://github.com/nam20485/pr-batch-comment-tool/security/advisories/new
 - Do not publicly disclose security vulnerabilities
 
 ---

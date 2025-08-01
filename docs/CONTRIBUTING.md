@@ -439,10 +439,9 @@ For feature requests, provide:
 
 **DO NOT** create public issues for security vulnerabilities. Instead:
 
-1. Email security concerns to [security contact]
-2. Use GitHub's private vulnerability reporting
-3. Allow time for assessment and patching
-4. Coordinate disclosure timing
+1. Use GitHub's private vulnerability reporting at: https://github.com/nam20485/pr-batch-comment-tool/security/advisories/new
+2. Allow time for assessment and patching
+3. Coordinate disclosure timing
 
 ## Community
 
