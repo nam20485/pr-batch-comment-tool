@@ -1,0 +1,274 @@
+{
+  "version": 1,
+  "parameters": "",
+  "projects": [
+    {
+      "path": "/home/runner/work/pr-batch-comment-tool/pr-batch-comment-tool/src/GitHubPrTool.Core/GitHubPrTool.Core.csproj",
+      "frameworks": [
+        {
+          "framework": "net8.0"
+        }
+      ]
+    },
+    {
+      "path": "/home/runner/work/pr-batch-comment-tool/pr-batch-comment-tool/src/GitHubPrTool.Infrastructure/GitHubPrTool.Infrastructure.csproj",
+      "frameworks": [
+        {
+          "framework": "net8.0",
+          "topLevelPackages": [
+            {
+              "id": "Google.Cloud.AIPlatform.V1",
+              "requestedVersion": "3.5.0",
+              "resolvedVersion": "3.5.0"
+            },
+            {
+              "id": "Microsoft.AspNetCore.DataProtection",
+              "requestedVersion": "8.0.8",
+              "resolvedVersion": "8.0.8"
+            },
+            {
+              "id": "Microsoft.EntityFrameworkCore.Design",
+              "requestedVersion": "9.0.7",
+              "resolvedVersion": "9.0.7"
+            },
+            {
+              "id": "Microsoft.EntityFrameworkCore.InMemory",
+              "requestedVersion": "9.0.7",
+              "resolvedVersion": "9.0.7"
+            },
+            {
+              "id": "Microsoft.EntityFrameworkCore.Sqlite",
+              "requestedVersion": "9.0.7",
+              "resolvedVersion": "9.0.7"
+            },
+            {
+              "id": "Microsoft.Extensions.Configuration",
+              "requestedVersion": "9.0.7",
+              "resolvedVersion": "9.0.7"
+            },
+            {
+              "id": "Microsoft.Extensions.DependencyInjection",
+              "requestedVersion": "9.0.7",
+              "resolvedVersion": "9.0.7"
+            },
+            {
+              "id": "Microsoft.Extensions.Hosting",
+              "requestedVersion": "9.0.7",
+              "resolvedVersion": "9.0.7"
+            },
+            {
+              "id": "Microsoft.Extensions.Http",
+              "requestedVersion": "9.0.7",
+              "resolvedVersion": "9.0.7"
+            },
+            {
+              "id": "Microsoft.Extensions.Logging",
+              "requestedVersion": "9.0.7",
+              "resolvedVersion": "9.0.7"
+            },
+            {
+              "id": "Octokit",
+              "requestedVersion": "14.0.0",
+              "resolvedVersion": "14.0.0"
+            },
+            {
+              "id": "Serilog.Extensions.Hosting",
+              "requestedVersion": "9.0.0",
+              "resolvedVersion": "9.0.0"
+            },
+            {
+              "id": "Serilog.Extensions.Logging",
+              "requestedVersion": "9.0.2",
+              "resolvedVersion": "9.0.2"
+            },
+            {
+              "id": "Serilog.Settings.Configuration",
+              "requestedVersion": "9.0.0",
+              "resolvedVersion": "9.0.0"
+            },
+            {
+              "id": "Serilog.Sinks.Console",
+              "requestedVersion": "6.0.0",
+              "resolvedVersion": "6.0.0"
+            },
+            {
+              "id": "Serilog.Sinks.File",
+              "requestedVersion": "7.0.0",
+              "resolvedVersion": "7.0.0"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "/home/runner/work/pr-batch-comment-tool/pr-batch-comment-tool/src/GitHubPrTool.Desktop/GitHubPrTool.Desktop.csproj",
+      "frameworks": [
+        {
+          "framework": "net8.0",
+          "topLevelPackages": [
+            {
+              "id": "Avalonia",
+              "requestedVersion": "11.3.2",
+              "resolvedVersion": "11.3.2"
+            },
+            {
+              "id": "Avalonia.Controls.DataGrid",
+              "requestedVersion": "11.3.2",
+              "resolvedVersion": "11.3.2"
+            },
+            {
+              "id": "Avalonia.Desktop",
+              "requestedVersion": "11.3.2",
+              "resolvedVersion": "11.3.2"
+            },
+            {
+              "id": "Avalonia.Themes.Fluent",
+              "requestedVersion": "11.3.2",
+              "resolvedVersion": "11.3.2"
+            },
+            {
+              "id": "CommunityToolkit.Mvvm",
+              "requestedVersion": "8.4.0",
+              "resolvedVersion": "8.4.0"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "/home/runner/work/pr-batch-comment-tool/pr-batch-comment-tool/tests/GitHubPrTool.Core.Tests/GitHubPrTool.Core.Tests.csproj",
+      "frameworks": [
+        {
+          "framework": "net8.0",
+          "topLevelPackages": [
+            {
+              "id": "coverlet.collector",
+              "requestedVersion": "6.0.0",
+              "resolvedVersion": "6.0.0"
+            },
+            {
+              "id": "FluentAssertions",
+              "requestedVersion": "6.12.0",
+              "resolvedVersion": "6.12.0"
+            },
+            {
+              "id": "Microsoft.NET.Test.Sdk",
+              "requestedVersion": "17.6.0",
+              "resolvedVersion": "17.6.0"
+            },
+            {
+              "id": "Moq",
+              "requestedVersion": "4.20.72",
+              "resolvedVersion": "4.20.72"
+            },
+            {
+              "id": "xunit",
+              "requestedVersion": "2.4.2",
+              "resolvedVersion": "2.4.2"
+            },
+            {
+              "id": "xunit.runner.visualstudio",
+              "requestedVersion": "2.4.5",
+              "resolvedVersion": "2.4.5"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "/home/runner/work/pr-batch-comment-tool/pr-batch-comment-tool/tests/GitHubPrTool.Infrastructure.Tests/GitHubPrTool.Infrastructure.Tests.csproj",
+      "frameworks": [
+        {
+          "framework": "net8.0",
+          "topLevelPackages": [
+            {
+              "id": "coverlet.collector",
+              "requestedVersion": "6.0.0",
+              "resolvedVersion": "6.0.0"
+            },
+            {
+              "id": "Microsoft.NET.Test.Sdk",
+              "requestedVersion": "17.6.0",
+              "resolvedVersion": "17.6.0"
+            },
+            {
+              "id": "Moq",
+              "requestedVersion": "4.20.72",
+              "resolvedVersion": "4.20.72"
+            },
+            {
+              "id": "xunit",
+              "requestedVersion": "2.4.2",
+              "resolvedVersion": "2.4.2"
+            },
+            {
+              "id": "xunit.runner.visualstudio",
+              "requestedVersion": "2.4.5",
+              "resolvedVersion": "2.4.5"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "/home/runner/work/pr-batch-comment-tool/pr-batch-comment-tool/tests/GitHubPrTool.Desktop.Tests/GitHubPrTool.Desktop.Tests.csproj",
+      "frameworks": [
+        {
+          "framework": "net8.0",
+          "topLevelPackages": [
+            {
+              "id": "coverlet.collector",
+              "requestedVersion": "6.0.0",
+              "resolvedVersion": "6.0.0"
+            },
+            {
+              "id": "FluentAssertions",
+              "requestedVersion": "6.12.2",
+              "resolvedVersion": "6.12.2"
+            },
+            {
+              "id": "Microsoft.NET.Test.Sdk",
+              "requestedVersion": "17.6.0",
+              "resolvedVersion": "17.6.0"
+            },
+            {
+              "id": "Moq",
+              "requestedVersion": "4.20.72",
+              "resolvedVersion": "4.20.72"
+            },
+            {
+              "id": "xunit",
+              "requestedVersion": "2.4.2",
+              "resolvedVersion": "2.4.2"
+            },
+            {
+              "id": "xunit.runner.visualstudio",
+              "requestedVersion": "2.4.5",
+              "resolvedVersion": "2.4.5"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "/home/runner/work/pr-batch-comment-tool/pr-batch-comment-tool/tests/GitHubPrTool.TestUtilities/GitHubPrTool.TestUtilities.csproj",
+      "frameworks": [
+        {
+          "framework": "net8.0",
+          "topLevelPackages": [
+            {
+              "id": "Bogus",
+              "requestedVersion": "35.6.1",
+              "resolvedVersion": "35.6.1"
+            },
+            {
+              "id": "Moq",
+              "requestedVersion": "4.20.72",
+              "resolvedVersion": "4.20.72"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
