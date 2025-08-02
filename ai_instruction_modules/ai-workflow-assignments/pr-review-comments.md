@@ -7,7 +7,7 @@
 **YOU MUST REPLY TO EACH REVIEW COMMENT INDIVIDUALLY!**
 
 - **NEVER** post one general PR comment
-- **ALWAYS** reply to each individual review comment using the GitHub API
+- **ALWAYS** reply to each individual review comment (i.e. the comment's thread) using the GitHub API
 - Each comment gets its own separate reply using: `gh api -X POST repos/owner/repo/pulls/number/comments/{comment_id}/replies`
 - This is a FUNDAMENTAL requirement - individual comment engagement is MANDATORY
 
@@ -18,11 +18,11 @@ Resolve **ALL (100%)** PR comments and get the PR approved. You must ensure that
 ### Acceptance Criteria
 
 2. PR Review started.
-1. All PR comments resolved by fixing the issue described.
+1. All PR comments resolved by fixing the respective issue described.
 3. All code changes made to resolve PR comments.
-4. All code chages committed to the PR branch. (**DON"T FORGET TO CHECKOUT THE PR BRANCH!**)
+4. All code chages committed to the PR branch. (**DON"T FORGET TO CHECKOUT THE PR BRANCH (BEFORE MAKING ANY CHANGES)!**)
 4. Comment added to PR describing each review comment you fixed and how.
-5. All PR Comments marked as resolved.
+5. All PR Review Comment Threads marked as resolved.
 
 ### Assignment
 
@@ -44,7 +44,7 @@ It is important to the final quality of our product for everyone to perform thei
     - make the code changes
     - commit the code changes (reference the PR & comment)
     - **leave a reply to THAT SPECIFIC comment explaining how you resolved it** 
-    - marked it resolved.
+    - marked comment reply thread resolved.
 Once finished, you will leave a comment on the PR summarizing the changes made and the comments resolved.
 
 **AFTER FINISHING THE FIX FOR EACH COMMENT, DO NOT FORGET TO COMMIT YOUR CHANGE, REPLY TO EACH WITH A COMMENT DESCRIBING YOUR FIX, AND THEN MARKING IT RESOLVED!**
@@ -116,7 +116,7 @@ Inform the stake-holder that the PR is ready for review and approval. Show them 
 
 ## Comment Resolution Method
 
-### Individual Comment Resolution Using GraphQL API
+### Individual Comment Thread Resolution Using GraphQL API
 
 To mark individual PR review comments as resolved, use GitHub's GraphQL API with the `resolveReviewThread` mutation:
 
