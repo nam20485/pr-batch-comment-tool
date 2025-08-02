@@ -121,10 +121,12 @@ jobs:
       run: |
         cd ./publish/${{ matrix.runtime }}
         if [ "${{ runner.os }}" = "Windows" ]; then
-          # Windows
+          # Windows - normalize certutil output to match sha256sum format
           for file in *; do
             if [ -f "$file" ]; then
-              certutil -hashfile "$file" SHA256 > "$file.sha256"
+              # Get hash from certutil and format like sha256sum (hash + space + filename)
+              hash=$(certutil -hashfile "$file" SHA256 | sed -n '2p' | tr -d '\r\n ')
+              echo "${hash,,} $file" > "$file.sha256"
             fi
           done
         else
