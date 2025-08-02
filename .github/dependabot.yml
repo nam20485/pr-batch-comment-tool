@@ -24,12 +24,8 @@ updates:
     allow:
       - dependency-type: "direct"
       - dependency-type: "indirect"
-    ignore:
-      # Ignore major version updates for stable dependencies
-      - dependency-name: "Microsoft.EntityFrameworkCore*"
-        update-types: ["version-update:semver-major"]
-      - dependency-name: "Microsoft.Extensions*"
-        update-types: ["version-update:semver-major"]
+    # Note: We allow all updates including major versions for security and feature benefits
+    # Major version updates are manually reviewed before merging
 
   # GitHub Actions
   - package-ecosystem: "github-actions"
