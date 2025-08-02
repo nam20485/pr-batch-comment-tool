@@ -2,12 +2,12 @@
 
 ## Supported Versions
 
-We actively support the following versions of GitHub PR Review Tool with security updates:
+We provide security updates for the latest stable major version of the application.
 
-| Version | Supported          |
-| ------- | ------------------ |
-| 1.x.x   | :white_check_mark: |
-| < 1.0   | :x:                |
+| Version        | Supported          |
+|----------------|--------------------|
+| Latest Stable  | :white_check_mark: |
+| Older Versions | :x:                |
 
 ## Reporting a Vulnerability
 
