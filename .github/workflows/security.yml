@@ -45,9 +45,10 @@ jobs:
     - name: Run .NET package vulnerability scan
       run: |
         echo "Checking for vulnerable packages..."
-        if dotnet list package --vulnerable --include-transitive | grep -q "has the following vulnerable packages"; then
+        dotnet list package --vulnerable --include-transitive --format json > package-vulnerabilities.json
+        if jq -e '.projects[].frameworks[].topLevelPackages[]?.vulnerabilities' package-vulnerabilities.json > /dev/null 2>&1; then
           echo "❌ Vulnerable packages found!"
-          dotnet list package --vulnerable --include-transitive
+          jq '.projects[].frameworks[].topLevelPackages[]? | select(.vulnerabilities) | {id: .id, vulnerabilities: .vulnerabilities}' package-vulnerabilities.json
           exit 1
         else
           echo "✅ No vulnerable packages found"
@@ -152,8 +153,11 @@ jobs:
       run: |
         dotnet tool install --global Microsoft.Sbom.Targets
         dotnet restore
+        # Extract version dynamically from project file
+        VERSION=$(grep -oP '<Version>\K[^<]+' src/GitHubPrTool.Desktop/GitHubPrTool.Desktop.csproj || echo "1.0.0")
+        echo "Detected version: $VERSION"
         # Generate SBOM for the main application
-        sbom-tool generate -b ./src -bc ./src -pn "GitHubPrTool" -pv "1.0.0" -ps "nam20485" -nsb https://github.com/nam20485/pr-batch-comment-tool
+        sbom-tool generate -b ./src -bc ./src -pn "GitHubPrTool" -pv "$VERSION" -ps "nam20485" -nsb https://github.com/nam20485/pr-batch-comment-tool
       continue-on-error: true
       
     - name: Upload SBOM

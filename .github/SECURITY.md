@@ -60,7 +60,7 @@ This security policy applies to:
 
 This policy does NOT apply to:
 - ❌ Third-party integrations not under our control
-- ❌ Issues in dependencies that are already publicly known
+- ❌ Vulnerabilities in third-party dependencies that are already publicly disclosed. We monitor these through our automated tooling and address them in our regular update cycle.
 - ❌ Social engineering or phishing attacks
 
 ### Security Best Practices

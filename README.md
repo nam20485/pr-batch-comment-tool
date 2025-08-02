@@ -2,7 +2,7 @@
 
 [![Build and Test](https://github.com/nam20485/pr-batch-comment-tool/actions/workflows/build.yml/badge.svg)](https://github.com/nam20485/pr-batch-comment-tool/actions/workflows/build.yml)
 [![Security Scan](https://github.com/nam20485/pr-batch-comment-tool/actions/workflows/security.yml/badge.svg)](https://github.com/nam20485/pr-batch-comment-tool/actions/workflows/security.yml)
-[![CodeQL](https://github.com/nam20485/pr-batch-comment-tool/actions/workflows/build.yml/badge.svg?event=push)](https://github.com/nam20485/pr-batch-comment-tool/security/code-scanning)
+[![CodeQL](https://github.com/nam20485/pr-batch-comment-tool/actions/workflows/security.yml/badge.svg?event=push)](https://github.com/nam20485/pr-batch-comment-tool/security/code-scanning)
 [![codecov](https://codecov.io/gh/nam20485/pr-batch-comment-tool/branch/main/graph/badge.svg)](https://codecov.io/gh/nam20485/pr-batch-comment-tool)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![.NET](https://img.shields.io/badge/.NET-8.0-blue.svg)](https://dotnet.microsoft.com/download/dotnet/8.0)
