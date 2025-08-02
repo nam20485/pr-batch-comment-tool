@@ -153,11 +153,30 @@ jobs:
       run: |
         dotnet tool install --global Microsoft.Sbom.Targets
         dotnet restore
+        # Extract project metadata dynamically from project files
+        MAIN_CSPROJ=$(find ./src -maxdepth 2 -name "*.Desktop.csproj" | head -n 1)
+        if [ -z "$MAIN_CSPROJ" ]; then
+          MAIN_CSPROJ=$(find ./src -maxdepth 2 -name "*.csproj" | head -n 1)
+        fi
+        echo "Using project file: $MAIN_CSPROJ"
+        
+        # Extract project name (prefer AssemblyName, fallback to PackageId, then filename)
+        PROJECT_NAME=$(grep -oP '<AssemblyName>\K[^<]+' "$MAIN_CSPROJ" 2>/dev/null || \
+                      grep -oP '<PackageId>\K[^<]+' "$MAIN_CSPROJ" 2>/dev/null || \
+                      basename "$MAIN_CSPROJ" .csproj)
+        
         # Extract version dynamically from project file
-        VERSION=$(grep -oP '<Version>\K[^<]+' src/GitHubPrTool.Desktop/GitHubPrTool.Desktop.csproj || echo "1.0.0")
+        VERSION=$(grep -oP '<Version>\K[^<]+' "$MAIN_CSPROJ" 2>/dev/null || echo "1.0.0")
+        
+        # Use environment variable for supplier with fallback
+        SUPPLIER="${{ env.SBOM_SUPPLIER || 'nam20485' }}"
+        
+        echo "Detected project name: $PROJECT_NAME"
         echo "Detected version: $VERSION"
+        echo "Using supplier: $SUPPLIER"
+        
         # Generate SBOM for the main application
-        sbom-tool generate -b ./src -bc ./src -pn "GitHubPrTool" -pv "$VERSION" -ps "nam20485" -nsb https://github.com/nam20485/pr-batch-comment-tool
+        sbom-tool generate -b ./src -bc ./src -pn "$PROJECT_NAME" -pv "$VERSION" -ps "$SUPPLIER" -nsb https://github.com/nam20485/pr-batch-comment-tool
       continue-on-error: true
       
     - name: Upload SBOM
