@@ -2,9 +2,10 @@ name: Build and Test
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ main, develop, release/* ]
   pull_request:
-    branches: [ main ]
+    branches: [ main, develop ]
+  workflow_dispatch:
 
 env:
   DOTNET_VERSION: '8.0.x'
@@ -134,6 +135,25 @@ jobs:
         category: "/language:csharp"
       continue-on-error: true
 
+  dependency-scan:
+    name: Dependency Vulnerability Scan
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Dependency Review
+      uses: actions/dependency-review-action@v4
+      with:
+        # Fail the build if vulnerabilities are found
+        fail-on-severity: moderate
+        # Allow GPL and other copyleft licenses (adjust as needed)
+        allow-licenses: GPL-2.0, GPL-3.0, LGPL-2.1, LGPL-3.0, MIT, Apache-2.0, BSD-2-Clause, BSD-3-Clause
+        # Output format
+        comment-summary-in-pr: always
+
   lint:
     name: Code Quality
     runs-on: ubuntu-latest
@@ -158,3 +178,6 @@ jobs:
       
     - name: Analyze code
       run: dotnet build --configuration Release --verbosity normal /warnaserror
+      
+    - name: Check for known security vulnerabilities
+      run: dotnet list package --vulnerable --include-transitive
