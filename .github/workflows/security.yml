@@ -149,9 +149,24 @@ jobs:
         echo "Checking for outdated packages..."
         dotnet outdated --upgrade --fail-on-updates || true
         
+    - name: Cache SBOM Tool
+      uses: actions/cache@v4
+      id: cache-sbom-tool
+      with:
+        path: .tools
+        key: sbom-tool-v2.2.7-${{ runner.os }}
+        restore-keys: |
+          sbom-tool-v2.2.7-
+          sbom-tool-
+    
+    - name: Install SBOM Tool
+      if: steps.cache-sbom-tool.outputs.cache-hit != 'true'
+      run: |
+        mkdir -p .tools
+        dotnet tool install --tool-path .tools Microsoft.Sbom.Targets --version 2.2.7
+    
     - name: Generate SBOM (Software Bill of Materials)
       run: |
-        dotnet tool install --global Microsoft.Sbom.Targets
         dotnet restore
         # Extract project metadata dynamically from project files
         MAIN_CSPROJ=$(find ./src -maxdepth 2 -name "*.Desktop.csproj" | head -n 1)
@@ -169,14 +184,14 @@ jobs:
         VERSION=$(grep -oP '<Version>\K[^<]+' "$MAIN_CSPROJ" 2>/dev/null || echo "1.0.0")
         
         # Use environment variable for supplier with fallback
-        SUPPLIER="${{ env.SBOM_SUPPLIER || 'nam20485' }}"
+        SUPPLIER="${SBOM_SUPPLIER:-nam20485}"
         
         echo "Detected project name: $PROJECT_NAME"
         echo "Detected version: $VERSION"
         echo "Using supplier: $SUPPLIER"
         
         # Generate SBOM for the main application
-        sbom-tool generate -b ./src -bc ./src -pn "$PROJECT_NAME" -pv "$VERSION" -ps "$SUPPLIER" -nsb https://github.com/nam20485/pr-batch-comment-tool
+        ./.tools/sbom-tool generate -b ./src -bc ./src -pn "$PROJECT_NAME" -pv "$VERSION" -ps "$SUPPLIER" -nsb https://github.com/nam20485/pr-batch-comment-tool
       continue-on-error: true
       
     - name: Upload SBOM
