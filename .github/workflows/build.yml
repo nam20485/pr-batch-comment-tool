@@ -54,7 +54,7 @@ jobs:
       run: echo "⚠️ Tests skipped by manual request"
       
     - name: Upload coverage reports
-      uses: codecov/codecov-action@v4
+      uses: codecov/codecov-action@v5
       if: ${{ !inputs.skip_tests }}
       with:
         directory: ./coverage
