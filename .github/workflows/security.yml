@@ -46,9 +46,9 @@ jobs:
       run: |
         echo "Checking for vulnerable packages..."
         dotnet list package --vulnerable --include-transitive --format json > package-vulnerabilities.json
-        if jq -e '.projects[].frameworks[].topLevelPackages[]?.vulnerabilities' package-vulnerabilities.json > /dev/null 2>&1; then
+        if jq -e '.projects[].frameworks[].topLevelPackages[]?.vulnerabilities or .projects[].frameworks[].transitivePackages[]?.vulnerabilities' package-vulnerabilities.json > /dev/null 2>&1; then
           echo "❌ Vulnerable packages found!"
-          jq '.projects[].frameworks[].topLevelPackages[]? | select(.vulnerabilities) | {id: .id, vulnerabilities: .vulnerabilities}' package-vulnerabilities.json
+          jq '.projects[].frameworks[] | (.topLevelPackages[]?, .transitivePackages[]?) | select(.vulnerabilities) | {id: .id, vulnerabilities: .vulnerabilities}' package-vulnerabilities.json
           exit 1
         else
           echo "✅ No vulnerable packages found"
