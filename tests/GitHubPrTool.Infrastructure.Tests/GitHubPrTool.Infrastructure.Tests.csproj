@@ -25,6 +25,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\GitHubPrTool.Infrastructure\GitHubPrTool.Infrastructure.csproj" />
+    <ProjectReference Include="..\GitHubPrTool.TestUtilities\GitHubPrTool.TestUtilities.csproj" />
   </ItemGroup>
 
 </Project>
