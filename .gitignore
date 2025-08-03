@@ -417,3 +417,7 @@ FodyWeavers.xsd
 *.msm
 *.msp
 src/GitHubPrTool.Desktop/githubprtool.db
+
+# CI/CD generated files that contain environment-specific paths
+package-list.json
+package-vulnerabilities.json
