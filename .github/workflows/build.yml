@@ -124,8 +124,8 @@ jobs:
           # Windows - normalize certutil output to match sha256sum format
           for file in *; do
             if [ -f "$file" ]; then
-              # Get hash from certutil and format like sha256sum (hash + space + filename)
-              hash=$(certutil -hashfile "$file" SHA256 | sed -n '2p' | tr -d '\r\n ')
+              # Extract hash using robust method that filters out lines with colons
+              hash=$(certutil -hashfile "$file" SHA256 | findstr /v ":" | tr -d '\r\n ')
               echo "${hash,,} $file" > "$file.sha256"
             fi
           done
