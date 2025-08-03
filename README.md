@@ -1,5 +1,12 @@
 # GitHub PR Review Tool
 
+[![Build and Test](https://github.com/nam20485/pr-batch-comment-tool/actions/workflows/build.yml/badge.svg)](https://github.com/nam20485/pr-batch-comment-tool/actions/workflows/build.yml)
+[![Security Scan](https://github.com/nam20485/pr-batch-comment-tool/actions/workflows/security.yml/badge.svg)](https://github.com/nam20485/pr-batch-comment-tool/actions/workflows/security.yml)
+[![CodeQL Analysis](https://github.com/nam20485/pr-batch-comment-tool/actions/workflows/security.yml/badge.svg?event=push)](https://github.com/nam20485/pr-batch-comment-tool/security/code-scanning)
+[![codecov](https://codecov.io/gh/nam20485/pr-batch-comment-tool/branch/main/graph/badge.svg)](https://codecov.io/gh/nam20485/pr-batch-comment-tool)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![.NET](https://img.shields.io/badge/.NET-8.0-blue.svg)](https://dotnet.microsoft.com/download/dotnet/8.0)
+
 A cross-platform desktop application built with Avalonia UI that streamlines GitHub Pull Request review workflows through intelligent comment management and batch operations.
 
 ![GitHub PR Review Tool](docs/images/app-screenshot.png)
@@ -205,6 +212,18 @@ Please read [CONTRIBUTING.md](docs/CONTRIBUTING.md) for guidelines on contributi
 - Try different theme settings
 
 For more troubleshooting information, see [Troubleshooting Guide](docs/troubleshooting.md).
+
+## 🔒 Security
+
+This project takes security seriously and implements multiple layers of protection:
+
+- **🔐 OAuth 2.0 Authentication**: Secure GitHub authentication without storing credentials locally
+- **🛡️ Automated Security Scanning**: Daily vulnerability scans with CodeQL and dependency checks
+- **📦 Dependency Management**: Automated dependency updates via Dependabot
+- **🔍 SBOM Generation**: Software Bill of Materials for supply chain transparency
+- **📊 Security Monitoring**: Continuous security monitoring with GitHub Security Advisories
+
+For security issues, please see our [Security Policy](.github/SECURITY.md).
 
 ## 🤝 Support
 
