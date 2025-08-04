@@ -1,0 +1,87 @@
+# GitHub Dependabot configuration for automated dependency updates
+# https://docs.github.com/en/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
+
+version: 2
+updates:
+  # .NET NuGet packages
+  - package-ecosystem: "nuget"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Etc/UTC"
+    # Limit the number of open pull requests
+    open-pull-requests-limit: 10
+    # Allow both direct and indirect updates
+    allow:
+      - dependency-type: "direct"
+      - dependency-type: "indirect"
+    # Group updates by dependency type for better organization
+    groups:
+      microsoft-packages:
+        patterns:
+          - "Microsoft.*"
+          - "System.*"
+      testing-packages:
+        patterns:
+          - "xunit*"
+          - "*Test*"
+          - "Moq*"
+          - "FluentAssertions*"
+    # Assign reviewers and labels
+    reviewers:
+      - "nam20485"
+    assignees:
+      - "nam20485"
+    labels:
+      - "dependencies"
+      - "automated"
+    # Commit message preferences
+    commit-message:
+      prefix: "deps"
+      include: "scope"
+    # Note: We allow all updates including major versions for security and feature benefits
+    # Major version updates are manually reviewed before merging
+
+  # GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Etc/UTC"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "nam20485"
+    assignees:
+      - "nam20485"
+    commit-message:
+      prefix: "ci"
+      include: "scope"
+    labels:
+      - "github-actions"
+      - "automated"
+    allow:
+      - dependency-type: "direct"
+
+  # Docker (if any Dockerfiles exist)
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Etc/UTC"
+    open-pull-requests-limit: 3
+    reviewers:
+      - "nam20485"
+    assignees:
+      - "nam20485"
+    commit-message:
+      prefix: "docker"
+      include: "scope"
+    labels:
+      - "docker"
+      - "automated"

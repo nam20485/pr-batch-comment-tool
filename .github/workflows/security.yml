@@ -1,0 +1,305 @@
+name: Security and Dependency Scanning
+
+on:
+  push:
+    branches: [ main, develop, release/* ]
+  pull_request:
+    branches: [ main, develop ]
+  schedule:
+    # Run security scans daily at 2 AM UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+
+env:
+  DOTNET_VERSION: '8.0.x'
+
+jobs:
+  dependency-scan:
+    name: Dependency Vulnerability Scan
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+        
+    - name: Cache dependencies
+      uses: actions/cache@v4
+      with:
+        path: ~/.nuget/packages
+        key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+        restore-keys: |
+          ${{ runner.os }}-nuget-
+          
+    - name: Restore dependencies
+      run: dotnet restore
+      
+    - name: Audit for security vulnerabilities
+      run: |
+        echo "Checking for known security vulnerabilities in dependencies..."
+        dotnet list package --vulnerable --include-transitive --framework net8.0 > vulnerability-report.txt 2>&1 || true
+        # Check if vulnerabilities were found
+        if grep -q "has the following vulnerable packages" vulnerability-report.txt; then
+          echo "⚠️ Security vulnerabilities found in dependencies:"
+          cat vulnerability-report.txt
+          echo "::warning::Security vulnerabilities detected in dependencies. Please review and update."
+        else
+          echo "✅ No known security vulnerabilities found in dependencies."
+        fi
+        
+    - name: Check for deprecated packages
+      run: |
+        echo "Checking for deprecated packages..."
+        dotnet list package --deprecated --include-transitive > deprecated-report.txt 2>&1 || true
+        
+        if grep -q "deprecated" deprecated-report.txt; then
+          echo "⚠️ Deprecated packages found:"
+          cat deprecated-report.txt
+          echo "::warning::Deprecated packages detected. Consider updating to supported alternatives."
+        else
+          echo "✅ No deprecated packages found."
+        fi
+        
+    - name: Check for outdated packages
+      run: |
+        echo "Checking for outdated packages..."
+        dotnet list package --outdated --include-transitive > outdated-report.txt 2>&1 || true
+        
+        if grep -q ">" outdated-report.txt; then
+          echo "ℹ️ Outdated packages found:"
+          cat outdated-report.txt
+          echo "::notice::Outdated packages detected. Consider updating for latest features and fixes."
+        else
+          echo "✅ All packages are up to date."
+        fi
+        
+    - name: Upload dependency reports
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: dependency-reports
+        path: |
+          vulnerability-report.txt
+          deprecated-report.txt
+          outdated-report.txt
+        retention-days: 30
+
+  codeql-scan:
+    name: CodeQL Security Analysis
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Initialize CodeQL
+      uses: github/codeql-action/init@v3
+      with:
+        languages: csharp
+        queries: security-extended,security-and-quality
+        
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+        
+    - name: Cache dependencies
+      uses: actions/cache@v4
+      with:
+        path: ~/.nuget/packages
+        key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+        restore-keys: |
+          ${{ runner.os }}-nuget-
+          
+    - name: Restore dependencies
+      run: dotnet restore
+
+    - name: Build for security analysis
+      run: dotnet build --configuration Release --no-restore
+
+    - name: Perform CodeQL Analysis
+      uses: github/codeql-action/analyze@v3
+      with:
+        category: "/language:csharp"
+        upload: true
+
+  trivy-scan:
+    name: Trivy Security Scan
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Run Trivy vulnerability scanner
+      uses: aquasecurity/trivy-action@master
+      with:
+        scan-type: 'fs'
+        scan-ref: '.'
+        format: 'sarif'
+        output: 'trivy-results.sarif'
+        severity: 'CRITICAL,HIGH,MEDIUM'
+        
+    - name: Upload Trivy scan results to GitHub Security tab
+      uses: github/codeql-action/upload-sarif@v3
+      if: always()
+      with:
+        sarif_file: 'trivy-results.sarif'
+        category: 'trivy'
+        
+    - name: Upload Trivy scan results as artifact
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: trivy-scan-results
+        path: trivy-results.sarif
+        retention-days: 30
+
+  secrets-scan:
+    name: Secrets Detection
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        
+    - name: Run GitLeaks for secrets detection
+      uses: gitleaks/gitleaks-action@v2
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      continue-on-error: true
+      
+    - name: TruffleHog OSS
+      uses: trufflesecurity/trufflehog@main
+      with:
+        path: ./
+        base: main
+        head: HEAD
+        extra_args: --debug --only-verified
+
+  supply-chain-scan:
+    name: Supply Chain Security
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+        
+    - name: Install dotnet-outdated
+      run: dotnet tool install --global dotnet-outdated-tool
+      
+    - name: Check for outdated packages
+      run: |
+        echo "Checking for outdated packages..."
+        dotnet outdated --upgrade --fail-on-updates || true
+        
+    - name: Cache SBOM Tool
+      uses: actions/cache@v4
+      id: cache-sbom-tool
+      with:
+        path: .tools
+        key: sbom-tool-v2.2.7-${{ runner.os }}
+        restore-keys: |
+          sbom-tool-v2.2.7-
+          sbom-tool-
+    
+    - name: Install SBOM Tool
+      if: steps.cache-sbom-tool.outputs.cache-hit != 'true'
+      run: |
+        mkdir -p .tools
+        dotnet tool install --tool-path .tools Microsoft.Sbom.Targets --version 2.2.7
+    
+    - name: Generate SBOM (Software Bill of Materials)
+      run: |
+        dotnet restore
+        # Extract project metadata dynamically from project files
+        MAIN_CSPROJ=$(find ./src -maxdepth 2 -name "*.Desktop.csproj" | head -n 1)
+        if [ -z "$MAIN_CSPROJ" ]; then
+          MAIN_CSPROJ=$(find ./src -maxdepth 2 -name "*.csproj" | head -n 1)
+        fi
+        echo "Using project file: $MAIN_CSPROJ"
+        
+        # Extract project name (prefer AssemblyName, fallback to PackageId, then filename)
+        PROJECT_NAME=$(grep -oP '<AssemblyName>\K[^<]+' "$MAIN_CSPROJ" 2>/dev/null || \
+                      grep -oP '<PackageId>\K[^<]+' "$MAIN_CSPROJ" 2>/dev/null || \
+                      basename "$MAIN_CSPROJ" .csproj)
+        
+        # Extract version dynamically from project file
+        VERSION=$(grep -oP '<Version>\K[^<]+' "$MAIN_CSPROJ" 2>/dev/null || echo "1.0.0")
+        
+        # Use environment variable for supplier with fallback
+        SUPPLIER="${SBOM_SUPPLIER:-nam20485}"
+        
+        echo "Detected project name: $PROJECT_NAME"
+        echo "Detected version: $VERSION"
+        echo "Using supplier: $SUPPLIER"
+        
+        # Generate SBOM for the main application
+        ./.tools/sbom-tool generate -b ./src -bc ./src -pn "$PROJECT_NAME" -pv "$VERSION" -ps "$SUPPLIER" -nsb https://github.com/nam20485/pr-batch-comment-tool
+      continue-on-error: true
+      
+    - name: Upload SBOM
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: software-bill-of-materials
+        path: ./_manifest/spdx_2.2/*.spdx.json
+
+  security-summary:
+    name: Security Summary
+    runs-on: ubuntu-latest
+    needs: [dependency-scan, codeql-scan, trivy-scan, secrets-scan, supply-chain-scan]
+    if: always()
+    
+    steps:
+    - name: Download dependency reports
+      uses: actions/download-artifact@v4
+      with:
+        name: dependency-reports
+        path: ./security-reports
+      continue-on-error: true
+      
+    - name: Download SBOM
+      uses: actions/download-artifact@v4
+      with:
+        name: software-bill-of-materials
+        path: ./security-reports
+      continue-on-error: true
+      
+    - name: Generate security summary
+      run: |
+        echo "# Security Scan Summary" > security-summary.md
+        echo "" >> security-summary.md
+        echo "## Scan Results" >> security-summary.md
+        echo "" >> security-summary.md
+        echo "- **Dependency Scan**: ${{ needs.dependency-scan.result }}" >> security-summary.md
+        echo "- **CodeQL Analysis**: ${{ needs.codeql-scan.result }}" >> security-summary.md
+        echo "- **Trivy Scan**: ${{ needs.trivy-scan.result }}" >> security-summary.md
+        echo "- **Secrets Detection**: ${{ needs.secrets-scan.result }}" >> security-summary.md
+        echo "- **Supply Chain Scan**: ${{ needs.supply-chain-scan.result }}" >> security-summary.md
+        echo "" >> security-summary.md
+        echo "## Report Date" >> security-summary.md
+        echo "$(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> security-summary.md
+        
+        cat security-summary.md
+        
+    - name: Upload security summary
+      uses: actions/upload-artifact@v4
+      with:
+        name: security-summary
+        path: security-summary.md
