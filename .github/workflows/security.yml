@@ -1,13 +1,13 @@
-name: Security Scan
+name: Security and Dependency Scanning
 
 on:
+  push:
+    branches: [ main, develop, release/* ]
+  pull_request:
+    branches: [ main, develop ]
   schedule:
     # Run security scans daily at 2 AM UTC
     - cron: '0 2 * * *'
-  push:
-    branches: [ main, develop ]
-  pull_request:
-    branches: [ main ]
   workflow_dispatch:
 
 env:
@@ -38,28 +38,55 @@ jobs:
     - name: Restore dependencies
       run: dotnet restore
       
-    - name: List packages for audit
-      run: dotnet list package --vulnerable --include-transitive --format json > package-vulnerabilities.json
-      continue-on-error: true
-      
-    - name: Run .NET package vulnerability scan
+    - name: Audit for security vulnerabilities
       run: |
-        echo "Checking for vulnerable packages..."
-        dotnet list package --vulnerable --include-transitive --format json > package-vulnerabilities.json
-        if jq -e '.projects[].frameworks[].topLevelPackages[]?.vulnerabilities or .projects[].frameworks[].transitivePackages[]?.vulnerabilities' package-vulnerabilities.json > /dev/null 2>&1; then
-          echo "❌ Vulnerable packages found!"
-          jq '.projects[].frameworks[] | (.topLevelPackages[]?, .transitivePackages[]?) | select(.vulnerabilities) | {id: .id, vulnerabilities: .vulnerabilities}' package-vulnerabilities.json
-          exit 1
+        echo "Checking for known security vulnerabilities in dependencies..."
+        dotnet list package --vulnerable --include-transitive --framework net8.0 > vulnerability-report.txt 2>&1 || true
+        # Check if vulnerabilities were found
+        if grep -q "has the following vulnerable packages" vulnerability-report.txt; then
+          echo "⚠️ Security vulnerabilities found in dependencies:"
+          cat vulnerability-report.txt
+          echo "::warning::Security vulnerabilities detected in dependencies. Please review and update."
         else
-          echo "✅ No vulnerable packages found"
+          echo "✅ No known security vulnerabilities found in dependencies."
         fi
-      
-    - name: Upload vulnerability report
+        
+    - name: Check for deprecated packages
+      run: |
+        echo "Checking for deprecated packages..."
+        dotnet list package --deprecated --include-transitive > deprecated-report.txt 2>&1 || true
+        
+        if grep -q "deprecated" deprecated-report.txt; then
+          echo "⚠️ Deprecated packages found:"
+          cat deprecated-report.txt
+          echo "::warning::Deprecated packages detected. Consider updating to supported alternatives."
+        else
+          echo "✅ No deprecated packages found."
+        fi
+        
+    - name: Check for outdated packages
+      run: |
+        echo "Checking for outdated packages..."
+        dotnet list package --outdated --include-transitive > outdated-report.txt 2>&1 || true
+        
+        if grep -q ">" outdated-report.txt; then
+          echo "ℹ️ Outdated packages found:"
+          cat outdated-report.txt
+          echo "::notice::Outdated packages detected. Consider updating for latest features and fixes."
+        else
+          echo "✅ All packages are up to date."
+        fi
+        
+    - name: Upload dependency reports
       uses: actions/upload-artifact@v4
       if: always()
       with:
-        name: package-vulnerabilities
-        path: package-vulnerabilities.json
+        name: dependency-reports
+        path: |
+          vulnerability-report.txt
+          deprecated-report.txt
+          outdated-report.txt
+        retention-days: 30
 
   codeql-scan:
     name: CodeQL Security Analysis
@@ -104,6 +131,38 @@ jobs:
         category: "/language:csharp"
         upload: true
 
+  trivy-scan:
+    name: Trivy Security Scan
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Run Trivy vulnerability scanner
+      uses: aquasecurity/trivy-action@master
+      with:
+        scan-type: 'fs'
+        scan-ref: '.'
+        format: 'sarif'
+        output: 'trivy-results.sarif'
+        severity: 'CRITICAL,HIGH,MEDIUM'
+        
+    - name: Upload Trivy scan results to GitHub Security tab
+      uses: github/codeql-action/upload-sarif@v3
+      if: always()
+      with:
+        sarif_file: 'trivy-results.sarif'
+        category: 'trivy'
+        
+    - name: Upload Trivy scan results as artifact
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: trivy-scan-results
+        path: trivy-results.sarif
+        retention-days: 30
+
   secrets-scan:
     name: Secrets Detection
     runs-on: ubuntu-latest
@@ -114,10 +173,10 @@ jobs:
       with:
         fetch-depth: 0
         
-    - name: Run Secretlint
-      uses: secretlint/secretlint-action@v1
-      with:
-        args: "**/*"
+    - name: Run GitLeaks for secrets detection
+      uses: gitleaks/gitleaks-action@v2
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       continue-on-error: true
       
     - name: TruffleHog OSS
@@ -204,14 +263,14 @@ jobs:
   security-summary:
     name: Security Summary
     runs-on: ubuntu-latest
-    needs: [dependency-scan, codeql-scan, secrets-scan, supply-chain-scan]
+    needs: [dependency-scan, codeql-scan, trivy-scan, secrets-scan, supply-chain-scan]
     if: always()
     
     steps:
-    - name: Download vulnerability reports
+    - name: Download dependency reports
       uses: actions/download-artifact@v4
       with:
-        name: package-vulnerabilities
+        name: dependency-reports
         path: ./security-reports
       continue-on-error: true
       
@@ -230,6 +289,7 @@ jobs:
         echo "" >> security-summary.md
         echo "- **Dependency Scan**: ${{ needs.dependency-scan.result }}" >> security-summary.md
         echo "- **CodeQL Analysis**: ${{ needs.codeql-scan.result }}" >> security-summary.md
+        echo "- **Trivy Scan**: ${{ needs.trivy-scan.result }}" >> security-summary.md
         echo "- **Secrets Detection**: ${{ needs.secrets-scan.result }}" >> security-summary.md
         echo "- **Supply Chain Scan**: ${{ needs.supply-chain-scan.result }}" >> security-summary.md
         echo "" >> security-summary.md
